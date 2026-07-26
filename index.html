@@ -1344,5 +1344,301 @@ function burst(n){
   }
 }
 </script>
+
+<!-- ═══════════════ OUR SONGS · music widget ═══════════════ -->
+<style id="osStyle">
+#ourSongs{position:fixed;right:16px;bottom:16px;z-index:46;display:flex;flex-direction:column;align-items:flex-end;gap:10px;font-family:'Lora',Georgia,serif}
+#ourSongs *{box-sizing:border-box}
+#ourSongs button{cursor:pointer;font-family:inherit}
+#ourSongs :focus-visible{outline:2px solid var(--gold);outline-offset:2px;border-radius:8px}
+
+/* ── the little vinyl ── */
+.os-disc{width:54px;height:54px;padding:0;border:0;background:none;border-radius:50%;position:relative;
+  filter:drop-shadow(0 4px 10px rgba(0,0,0,.45));transition:transform .25s}
+.os-disc:hover{transform:translateY(-2px)}
+.os-vinyl{width:100%;height:100%;display:block;animation:osSpin 7s linear infinite;animation-play-state:paused}
+.os-playing .os-vinyl{animation-play-state:running}
+.os-still .os-vinyl{animation:none}
+.os-playing .os-disc{filter:drop-shadow(0 0 12px rgba(238,192,122,.35)) drop-shadow(0 4px 10px rgba(0,0,0,.45))}
+@keyframes osSpin{to{transform:rotate(360deg)}}
+
+/* ── hint bubble ── */
+.os-hint{order:-1;background:var(--dusk);border:1px solid var(--line);color:var(--pale);
+  font-size:11.5px;font-style:italic;padding:7px 12px;border-radius:999px;letter-spacing:.02em;
+  opacity:0;transform:translateY(6px);transition:opacity .5s,transform .5s;pointer-events:none;
+  box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.os-hint.show{opacity:1;transform:none}
+
+/* ── panel ── */
+.os-panel{order:-2;width:min(300px,calc(100vw - 28px));background:linear-gradient(160deg,var(--dusk),var(--night) 80%);
+  border:1px solid var(--line);border-radius:18px;padding:16px 16px 12px;color:var(--pearl);
+  box-shadow:0 18px 50px rgba(0,0,0,.55);
+  opacity:0;transform:translateY(10px) scale(.98);pointer-events:none;transition:opacity .28s,transform .28s}
+.os-open .os-panel{opacity:1;transform:none;pointer-events:auto}
+.os-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.os-eyebrow{font-family:'Poppins',sans-serif;font-size:9px;font-weight:500;letter-spacing:.24em;text-transform:uppercase;color:var(--dim)}
+.os-title{font-family:'Great Vibes',cursive;font-size:31px;line-height:1.05;color:var(--gold);margin-top:2px}
+.os-x{background:none;border:0;color:var(--dim);font-size:19px;line-height:1;padding:2px 6px;border-radius:8px}
+.os-x:hover{color:var(--pale)}
+.os-swash{display:block;width:130px;margin:4px 0 10px}
+
+/* small official player = the song's source */
+.os-video{border:1px solid var(--line);border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:var(--ink)}
+.os-video iframe{display:block;width:100%;height:100%;border:0}
+
+.os-now{margin:10px 2px 8px}
+.os-nowtitle{font-size:15.5px;font-weight:500;color:var(--pearl)}
+.os-nowartist{font-size:12px;font-style:italic;color:var(--mist);margin-top:1px}
+
+/* ── controls ── */
+.os-ctrls{display:flex;align-items:center;justify-content:center;gap:14px;margin:4px 0 10px}
+.os-ctrls button{display:flex;align-items:center;justify-content:center;border-radius:50%}
+.os-skip{width:34px;height:34px;background:none;border:1px solid var(--line);color:var(--pale);transition:border-color .2s,color .2s}
+.os-skip:hover{border-color:var(--gold);color:var(--gold)}
+.os-skip svg{width:14px;height:14px;fill:currentColor}
+.os-playbtn{width:46px;height:46px;border:0;background:linear-gradient(150deg,var(--gold),var(--blush));color:var(--ink);
+  box-shadow:0 4px 14px rgba(238,192,122,.28);transition:transform .18s}
+.os-playbtn:hover{transform:scale(1.06)}
+.os-playbtn svg{width:17px;height:17px;fill:var(--ink)}
+.os-playbtn .os-ic-pause{display:none}
+.os-playbtn.is-playing .os-ic-pause{display:block}
+.os-playbtn.is-playing .os-ic-play{display:none}
+
+/* ── the list ── */
+.os-list{list-style:none;margin:0;padding:2px 0 0;border-top:1px solid var(--line);max-height:168px;overflow:auto}
+.os-song{width:100%;display:flex;align-items:center;gap:9px;background:none;border:0;text-align:left;
+  padding:8px 4px;color:var(--pale);border-radius:9px;transition:background .2s}
+.os-song:hover{background:rgba(238,192,122,.07)}
+.os-num{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;color:var(--gold);font-size:14px;min-width:18px}
+.os-meta{flex:1;min-width:0}
+.os-st{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.os-sa{display:block;font-size:11px;font-style:italic;color:var(--dim)}
+.os-song.current .os-st{color:var(--gold)}
+.os-eq{display:none;align-items:flex-end;gap:2px;height:12px}
+.os-song.current .os-eq{display:flex}
+.os-eq i{width:2.5px;height:5px;background:var(--blush);border-radius:1px;animation:osEq .9s ease-in-out infinite;animation-play-state:paused}
+.os-eq i:nth-child(2){animation-delay:.22s}.os-eq i:nth-child(3){animation-delay:.44s}
+.os-playing .os-eq i{animation-play-state:running}
+.os-still .os-eq i{animation:none;height:8px}
+@keyframes osEq{0%,100%{height:4px}50%{height:12px}}
+.os-foot{font-size:10.5px;font-style:italic;color:var(--dim);text-align:center;margin:8px 0 0}
+
+@media (max-width:520px){#ourSongs{right:12px;bottom:12px}.os-disc{width:50px;height:50px}}
+</style>
+
+<div id="ourSongs">
+  <div class="os-panel" id="osPanel" aria-hidden="true" role="region" aria-label="Our songs music player">
+    <div class="os-head">
+      <div>
+        <div class="os-eyebrow">the kingdom's radio</div>
+        <div class="os-title">our songs</div>
+      </div>
+      <button type="button" class="os-x" id="osClose" aria-label="Close player">✕</button>
+    </div>
+    <svg class="os-swash" viewBox="0 0 160 12" aria-hidden="true"><path d="M4 6 C 40 12, 62 1, 80 6 C 98 11, 120 0, 156 6" fill="none" stroke="#EEC07A" stroke-width="1" opacity=".7"/><circle cx="80" cy="6" r="1.6" fill="#F2A9B4"/></svg>
+    <div class="os-video"><div id="osYT"></div></div>
+    <div class="os-now">
+      <div class="os-nowtitle" id="osNowTitle"></div>
+      <div class="os-nowartist" id="osNowArtist"></div>
+    </div>
+    <div class="os-ctrls">
+      <button type="button" class="os-skip" id="osPrev" aria-label="Previous song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h2v14H6zM20 5v14L9.5 12z"/></svg></button>
+      <button type="button" class="os-playbtn" id="osPlay" aria-label="Play">
+        <svg class="os-ic-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4.5v15l13-7.5z"/></svg>
+        <svg class="os-ic-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 4.5h4v15h-4zM13.5 4.5h4v15h-4z"/></svg>
+      </button>
+      <button type="button" class="os-skip" id="osNext" aria-label="Next song"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 5h2v14h-2zM4 5v14l10.5-7z"/></svg></button>
+    </div>
+    <ol class="os-list" id="osList"></ol>
+    <div class="os-foot">more echoes to be added ✦</div>
+  </div>
+
+  <div class="os-hint" id="osHint">tap anywhere — our song will play ♪</div>
+
+  <button type="button" class="os-disc" id="osDisc" aria-label="Our songs — music player" aria-expanded="false">
+    <svg class="os-vinyl" viewBox="0 0 54 54" aria-hidden="true">
+      <circle cx="27" cy="27" r="26" fill="#0E0B21" stroke="#453C74" stroke-width="1.4"/>
+      <circle cx="27" cy="27" r="20.5" fill="none" stroke="#453C74" stroke-width="1" opacity=".55"/>
+      <circle cx="27" cy="27" r="16" fill="none" stroke="#453C74" stroke-width="1" opacity=".4"/>
+      <path d="M27 1 A26 26 0 0 1 53 27" fill="none" stroke="#EEC07A" stroke-width="1.4" opacity=".55" stroke-linecap="round"/>
+      <circle cx="27" cy="27" r="10" fill="#F2A9B4"/>
+      <text x="27" y="24.5" text-anchor="middle" font-size="7" fill="#14102C">✦</text>
+      <circle cx="27" cy="27" r="2" fill="#0E0B21"/>
+    </svg>
+  </button>
+</div>
+
+<script>
+(function(){
+  /* ═══ OUR SONGS · playlist ═══
+     To add a song: add a line { title, artist, yt } — yt is the YouTube video id. */
+  var OUR_SONGS = [
+    { title: "Him & I", artist: "G-Eazy & Halsey", yt: "SA7AIQw-7Ms", alt: "NdSJ1pyaAH8" }
+  ];
+  var VOLUME = 35; /* gentle, background-level */
+
+  var osReduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var root  = document.getElementById('ourSongs');
+  var panel = document.getElementById('osPanel');
+  var disc  = document.getElementById('osDisc');
+  var hint  = document.getElementById('osHint');
+  var list  = document.getElementById('osList');
+  var nowT  = document.getElementById('osNowTitle');
+  var nowA  = document.getElementById('osNowArtist');
+  var bPlay = document.getElementById('osPlay');
+  var bPrev = document.getElementById('osPrev');
+  var bNext = document.getElementById('osNext');
+  var bX    = document.getElementById('osClose');
+
+  var player = null, idx = 0, started = false, apiReady = false,
+      wantStart = false, playing = false, fadeTimer = null, triedAlt = false;
+
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function roman(n){
+    var m = [[10,'x'],[9,'ix'],[5,'v'],[4,'iv'],[1,'i']], r = '';
+    for (var k = 0; k < m.length; k++){ while (n >= m[k][0]){ r += m[k][1]; n -= m[k][0]; } }
+    return r;
+  }
+
+  function buildList(){
+    var h = '';
+    for (var i = 0; i < OUR_SONGS.length; i++){
+      var s = OUR_SONGS[i];
+      h += '<li><button type="button" class="os-song' + (i === idx ? ' current' : '') + '" data-i="' + i + '">' +
+             '<span class="os-num">' + roman(i + 1) + '.</span>' +
+             '<span class="os-meta"><span class="os-st">' + esc(s.title) + '</span>' +
+             '<span class="os-sa">' + esc(s.artist) + '</span></span>' +
+             '<span class="os-eq" aria-hidden="true"><i></i><i></i><i></i></span>' +
+           '</button></li>';
+    }
+    list.innerHTML = h;
+  }
+
+  function updateNow(){
+    var s = OUR_SONGS[idx];
+    nowT.textContent = s.title;
+    nowA.textContent = s.artist;
+    var items = list.querySelectorAll('.os-song');
+    for (var i = 0; i < items.length; i++) items[i].classList.toggle('current', i === idx);
+  }
+
+  /* ── YouTube IFrame API ── */
+  var tag = document.createElement('script');
+  tag.src = 'https://www.youtube.com/iframe_api';
+  document.head.appendChild(tag);
+  window.onYouTubeIframeAPIReady = function(){
+    apiReady = true;
+    if (wantStart) createPlayer();
+  };
+
+  function createPlayer(){
+    player = new YT.Player('osYT', {
+      width: '100%', height: '100%',
+      videoId: OUR_SONGS[idx].yt,
+      playerVars: { autoplay: 1, playsinline: 1, rel: 0, iv_load_policy: 3 },
+      events: {
+        onReady: function(e){ e.target.setVolume(0); e.target.playVideo(); fadeTo(VOLUME); },
+        onStateChange: onState,
+        onError: onErr
+      }
+    });
+  }
+
+  function fadeTo(target){
+    if (!player || !player.setVolume) return;
+    clearInterval(fadeTimer);
+    fadeTimer = setInterval(function(){
+      if (!player || !player.getVolume){ clearInterval(fadeTimer); return; }
+      var v = player.getVolume();
+      if (v >= target){ player.setVolume(target); clearInterval(fadeTimer); return; }
+      player.setVolume(Math.min(target, v + 3));
+    }, 130);
+  }
+
+  function onState(e){
+    if (e.data === YT.PlayerState.ENDED){ nextSong(); return; }
+    setPlaying(e.data === YT.PlayerState.PLAYING || e.data === YT.PlayerState.BUFFERING);
+  }
+
+  function onErr(){
+    var s = OUR_SONGS[idx];
+    if (s.alt && !triedAlt){ triedAlt = true; player.loadVideoById(s.alt); return; }
+    nowA.textContent = 'this one would not load \u2014 try the next \u2726';
+    if (OUR_SONGS.length > 1) setTimeout(function(){ nextSong(); }, 1200);
+  }
+
+  function setPlaying(b){
+    playing = b;
+    root.classList.toggle('os-playing', b);
+    bPlay.setAttribute('aria-label', b ? 'Pause' : 'Play');
+    bPlay.classList.toggle('is-playing', b);
+  }
+
+  function setSong(i){
+    idx = ((i % OUR_SONGS.length) + OUR_SONGS.length) % OUR_SONGS.length;
+    triedAlt = false;
+    updateNow();
+    if (player && player.loadVideoById){
+      player.loadVideoById(OUR_SONGS[idx].yt);
+      player.setVolume(VOLUME);
+    } else {
+      startMusic();
+    }
+  }
+  function nextSong(){ setSong(idx + 1); }
+  function prevSong(){ setSong(idx - 1); }
+
+  function startMusic(){
+    if (started) return;
+    started = true;
+    hideHint();
+    if (apiReady) createPlayer(); else wantStart = true;
+  }
+
+  function playPause(){
+    if (!started || !player || !player.getPlayerState){ startMusic(); return; }
+    if (player.getPlayerState() === YT.PlayerState.PLAYING) player.pauseVideo();
+    else player.playVideo();
+  }
+
+  /* ── panel open / close ── */
+  function openPanel(open){
+    root.classList.toggle('os-open', open);
+    panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+    disc.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
+  disc.addEventListener('click', function(){ openPanel(!root.classList.contains('os-open')); });
+  bX.addEventListener('click', function(){ openPanel(false); });
+  addEventListener('keydown', function(e){ if (e.key === 'Escape') openPanel(false); });
+
+  bPlay.addEventListener('click', playPause);
+  bNext.addEventListener('click', nextSong);
+  bPrev.addEventListener('click', prevSong);
+  list.addEventListener('click', function(e){
+    var b = e.target.closest('.os-song');
+    if (!b) return;
+    var i = parseInt(b.getAttribute('data-i'), 10);
+    if (i === idx && started) playPause(); else setSong(i);
+  });
+
+  /* first touch anywhere wakes the music (browsers require a gesture) */
+  addEventListener('pointerdown', startMusic);
+  addEventListener('keydown', startMusic);
+
+  /* ── shy hint bubble ── */
+  var hintTimer = setTimeout(function(){
+    if (!started) hint.classList.add('show');
+  }, 1400);
+  setTimeout(hideHint, 16000);
+  function hideHint(){ clearTimeout(hintTimer); hint.classList.remove('show'); }
+
+  buildList();
+  updateNow();
+  if (osReduced) root.classList.add('os-still');
+})();
+</script>
+<!-- ═══════════ end OUR SONGS widget ═══════════ -->
+
 </body>
 </html>
