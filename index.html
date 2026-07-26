@@ -1370,7 +1370,7 @@ function burst(n){
 .os-hint.show{opacity:1;transform:none}
 
 /* ── panel ── */
-.os-panel{order:-2;width:min(300px,calc(100vw - 28px));background:linear-gradient(160deg,var(--dusk),var(--night) 80%);
+.os-panel{order:-2;width:min(280px,calc(100vw - 28px));background:linear-gradient(160deg,var(--dusk),var(--night) 80%);
   border:1px solid var(--line);border-radius:18px;padding:16px 16px 12px;color:var(--pearl);
   box-shadow:0 18px 50px rgba(0,0,0,.55);
   opacity:0;transform:translateY(10px) scale(.98);pointer-events:none;transition:opacity .28s,transform .28s}
@@ -1382,11 +1382,11 @@ function burst(n){
 .os-x:hover{color:var(--pale)}
 .os-swash{display:block;width:130px;margin:4px 0 10px}
 
-/* small official player = the song's source */
-.os-video{border:1px solid var(--line);border-radius:12px;overflow:hidden;aspect-ratio:16/9;background:var(--ink)}
-.os-video iframe{display:block;width:100%;height:100%;border:0}
+/* hidden audio engine — YouTube supplies the sound, unseen */
+.os-audio{position:absolute;bottom:0;right:0;width:2px;height:2px;opacity:.01;overflow:hidden;pointer-events:none}
+.os-audio iframe{width:100%;height:100%;border:0}
 
-.os-now{margin:10px 2px 8px}
+.os-now{margin:2px 2px 10px}
 .os-nowtitle{font-size:15.5px;font-weight:500;color:var(--pearl)}
 .os-nowartist{font-size:12px;font-style:italic;color:var(--mist);margin-top:1px}
 
@@ -1436,7 +1436,6 @@ function burst(n){
       <button type="button" class="os-x" id="osClose" aria-label="Close player">✕</button>
     </div>
     <svg class="os-swash" viewBox="0 0 160 12" aria-hidden="true"><path d="M4 6 C 40 12, 62 1, 80 6 C 98 11, 120 0, 156 6" fill="none" stroke="#EEC07A" stroke-width="1" opacity=".7"/><circle cx="80" cy="6" r="1.6" fill="#F2A9B4"/></svg>
-    <div class="os-video"><div id="osYT"></div></div>
     <div class="os-now">
       <div class="os-nowtitle" id="osNowTitle"></div>
       <div class="os-nowartist" id="osNowArtist"></div>
@@ -1452,6 +1451,8 @@ function burst(n){
     <ol class="os-list" id="osList"></ol>
     <div class="os-foot">more echoes to be added ✦</div>
   </div>
+
+  <div class="os-audio" aria-hidden="true"><div id="osYT"></div></div>
 
   <div class="os-hint" id="osHint">tap anywhere — our song will play ♪</div>
 
@@ -1473,7 +1474,9 @@ function burst(n){
   /* ═══ OUR SONGS · playlist ═══
      To add a song: add a line { title, artist, yt } — yt is the YouTube video id. */
   var OUR_SONGS = [
-    { title: "Him & I", artist: "G-Eazy & Halsey", yt: "SA7AIQw-7Ms", alt: "NdSJ1pyaAH8" }
+    { title: "Him & I", artist: "G-Eazy & Halsey", yt: "SA7AIQw-7Ms", alt: "NdSJ1pyaAH8" },
+    { title: "Achchi Lagti Ho", artist: "Udit Narayan & Kavita Krishnamurthy", yt: "HJIRktKAahU", alt: "VSYbtrB79kc" },
+    { title: "Aarzu", artist: "Noor, Khan & Madhurxo", yt: "M5OCLifZK1w", alt: "LlwHphMhUOo" }
   ];
   var VOLUME = 35; /* gentle, background-level */
 
@@ -1535,7 +1538,7 @@ function burst(n){
     player = new YT.Player('osYT', {
       width: '100%', height: '100%',
       videoId: OUR_SONGS[idx].yt,
-      playerVars: { autoplay: 1, playsinline: 1, rel: 0, iv_load_policy: 3 },
+      playerVars: { autoplay: 1, playsinline: 1, rel: 0, iv_load_policy: 3, controls: 0 },
       events: {
         onReady: function(e){ e.target.setVolume(0); e.target.playVideo(); fadeTo(VOLUME); },
         onStateChange: onState,
