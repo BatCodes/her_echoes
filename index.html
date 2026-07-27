@@ -357,6 +357,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gold);outl
 <div id="grain"></div>
 
 <!-- ═══════════════ ONCE UPON A TIME · storybook cover ═══════════════ -->
+<script>try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(e){}</script>
 <style id="ftStyle">
 html{scroll-behavior:smooth}
 .ft-lock{overflow:hidden}
@@ -407,17 +408,39 @@ html{scroll-behavior:smooth}
   html.ft .shead.vis h2:not(.ftlz){opacity:1;transform:none;filter:none;text-shadow:0 0 26px rgba(238,192,122,.26);transition-delay:.24s}
   html.ft .shead.vis p:not(.ftlz){opacity:1;transform:none;filter:none;transition-delay:.46s}
 
-  /* — enchanted ink: every letter is conjured onto the page — */
-  html.ft .ftl{--gc:238,192,122;opacity:0;display:inline-block;transform:translateY(.45em) rotate(var(--r,4deg)) scale(.55);filter:blur(6px)}
+  /* — enchanted ink: every letter is struck by the wand — */
+  html.ft .ftl{--gc:238,192,122;position:relative;opacity:0;display:inline-block;transform:translateY(.45em) rotate(var(--r,4deg)) scale(.55);filter:blur(6px)}
   html.ft .ftl.ftg{--gc:242,169,180}
   html.ft :is(.vis,.ftv,.in,.on,.open,.show) .ftl,
-  html.tale .hero .ftl{animation:ftInk .85s cubic-bezier(.2,.7,.25,1.15) forwards;animation-delay:var(--d,0ms)}
+  html.tale .hero .ftl{animation:ftInk 1.05s cubic-bezier(.2,.7,.25,1.15) forwards;animation-delay:var(--d,0ms)}
   @keyframes ftInk{
-    0%{opacity:0;transform:translateY(.45em) rotate(var(--r,4deg)) scale(.55);filter:blur(6px);
-       text-shadow:0 0 4px rgba(255,255,255,.95),0 0 20px rgba(var(--gc),1)}
-    45%{opacity:1;transform:translateY(-.09em) rotate(calc(var(--r,4deg)*-.4)) scale(1.16);filter:blur(0);
-       text-shadow:0 0 7px rgba(255,246,220,.9),0 0 24px rgba(var(--gc),.8)}
+    0%{opacity:0;transform:translateY(.45em) rotate(var(--r,4deg)) scale(.55);filter:blur(6px) brightness(1);
+       text-shadow:0 0 5px rgba(255,255,255,1),0 0 22px rgba(var(--gc),1)}
+    42%{opacity:1;transform:translateY(-.09em) rotate(calc(var(--r,4deg)*-.4)) scale(1.18);filter:blur(0) brightness(1.55);
+       text-shadow:0 0 6px rgba(255,255,255,.95),0 0 16px rgba(255,246,214,.9),0 0 32px rgba(var(--gc),.85)}
     100%{opacity:1;transform:translateY(0) rotate(0deg) scale(1);filter:none;text-shadow:0 0 9px rgba(var(--gc),.16)}
+  }
+
+  /* — a tiny star bursts above each letter as it lands (bibbidi-bobbidi) — */
+  html.ft .ftl::after{content:'✦';position:absolute;left:50%;top:-10%;font-size:.48em;line-height:1;color:#FFF9E8;
+    opacity:0;transform:translate(-50%,.1em) scale(0);pointer-events:none;
+    text-shadow:0 0 8px rgba(255,246,214,.95),0 0 16px rgba(238,192,122,.85)}
+  html.ft :is(.vis,.ftv,.in,.on,.open,.show) .ftl::after,
+  html.tale .hero .ftl::after{animation:ftTwk .8s ease-out forwards;animation-delay:var(--d,0ms)}
+  @keyframes ftTwk{
+    0%{opacity:0;transform:translate(-50%,.1em) scale(0) rotate(0deg)}
+    32%{opacity:1;transform:translate(-50%,-.3em) scale(1) rotate(80deg)}
+    100%{opacity:0;transform:translate(-50%,-.85em) scale(.15) rotate(170deg)}
+  }
+
+  /* — glitter shaken loose from the wand, drifting off the fresh letters — */
+  .ftsp{position:fixed;z-index:60;pointer-events:none;line-height:1;
+    text-shadow:0 0 6px rgba(255,255,255,.9),0 0 12px rgba(238,192,122,.8);
+    animation:ftSp 1s ease-out forwards}
+  @keyframes ftSp{
+    0%{opacity:0;transform:translate(0,0) scale(.35) rotate(0deg)}
+    16%{opacity:1}
+    100%{opacity:0;transform:translate(var(--sx,14px),var(--sy,-30px)) scale(1.1) rotate(var(--sr,120deg))}
   }
 
   /* — golden stardust drifting up through the whole tale — */
@@ -1768,6 +1791,19 @@ function burst(n){
   var cover = d.getElementById('ftCover');
   docEl.classList.add('ft');
 
+  /* — a reload always begins at the entrance, never mid-tale — */
+  function toTop(){
+    var se = docEl.style, prev = se.scrollBehavior;
+    se.scrollBehavior = 'auto';               /* bypass smooth-scroll for an instant jump */
+    window.scrollTo(0, 0);
+    se.scrollBehavior = prev || '';
+  }
+  toTop();
+  addEventListener('pageshow', function(){
+    /* only while the cover is still up — returning mid-read keeps her place */
+    if (d.getElementById('ftCover')) toTop();
+  });
+
   /* ── enchanted ink: wrap each letter (or word, for cursive script) in a timed span ── */
   function ftLetterize(el, mode, step, start){
     if (!el || el.classList.contains('ftlz')) return start;
@@ -1835,58 +1871,83 @@ function burst(n){
     /* — chapter headings: script signs, the title writes, then the words — */
     var allHeads = d.querySelectorAll('.shead');
     for (var p0 = 0; p0 < allHeads.length; p0++){
-      var hd = allHeads[p0], tt = 120;
-      tt = ftLetterize(hd.querySelector('.fl'), 'word', 130, tt);
-      tt += 170;
-      tt = ftLetterize(hd.querySelector('h2'), 'char', 52, tt);
+      var hd = allHeads[p0], tt = 150;
+      tt = ftLetterize(hd.querySelector('.fl'), 'word', 240, tt);
+      tt += 300;
+      tt = ftLetterize(hd.querySelector('h2'), 'char', 95, tt);
       hd.dataset.ftH2End = tt;
-      tt += 230;
-      ftLetterize(hd.querySelector('p'), 'char', 12, tt);
+      tt += 380;
+      ftLetterize(hd.querySelector('p'), 'char', 34, tt);
     }
 
     /* — the hero writes itself as the tale opens (nastaliq stays whole, on purpose) — */
     var hero = d.querySelector('.hero'), big = d.getElementById('bigname');
     if (hero){
-      var ht = 350;
-      ht = ftLetterize(hero.querySelector('.mooncorner .lbl'), 'char', 28, ht) + 120;
-      ht = ftLetterize(hero.querySelector('.for'), 'word', 150, Math.max(ht, 600)) + 150;
-      if (big){ ht = ftLetterize(big, 'char', 170, Math.max(ht, 900)); big.dataset.ftEnd = ht; ht += 260; }
-      ht = ftLetterize(hero.querySelector('.crest'), 'char', 22, ht) + 160;
-      ht = ftLetterize(hero.querySelector('.sub'), 'char', 20, ht) + 160;
-      ftLetterize(hero.querySelector('.begin'), 'word', 130, ht);
+      var ht = 400;
+      ht = ftLetterize(hero.querySelector('.mooncorner .lbl'), 'char', 55, ht) + 250;
+      ht = ftLetterize(hero.querySelector('.for'), 'word', 300, Math.max(ht, 700)) + 300;
+      if (big){ ht = ftLetterize(big, 'char', 240, Math.max(ht, 1100)); big.dataset.ftEnd = ht; ht += 420; }
+      ht = ftLetterize(hero.querySelector('.crest'), 'char', 48, ht) + 320;
+      ht = ftLetterize(hero.querySelector('.sub'), 'char', 46, ht) + 320;
+      ftLetterize(hero.querySelector('.begin'), 'word', 240, ht);
     }
 
     /* — scroll-revealed blocks (viewport-triggered) — */
-    eachSeq('.tile', [['.cat','char',34,120],['.ans','char',34,0]], 150, true);
-    eachSeq('.fitem', [['.fdate','char',22,110],['.ftitle','char',22,0]], 130, true);
-    eachSeq('.steps li', [['.','char',13,0]], 260, true);
-    seq(d.querySelector('.decree'), [['.dk','char',26,150],['h3','char',46,200],
-      ['p:nth-of-type(1)','char',12,180],['p:nth-of-type(2)','char',12,180],
-      ['.dsign','word',170,120],['.dwit','char',18,0]], 90, true);
+    eachSeq('.tile', [['.cat','char',60,200],['.ans','char',60,0]], 260, true);
+    eachSeq('.fitem', [['.fdate','char',48,190],['.ftitle','char',48,0]], 220, true);
+    eachSeq('.steps li', [['.','char',30,0]], 420, true);
+    seq(d.querySelector('.decree'), [['.dk','char',55,260],['h3','char',85,340],
+      ['p:nth-of-type(1)','char',34,300],['p:nth-of-type(2)','char',34,300],
+      ['.dsign','word',280,220],['.dwit','char',42,0]], 120, true);
     ['.counter','.counterhint','.hintl','.skycap','.gcount','.ptitle','.pcount','.footnote',
      '.holdhint','.finale .k','.finale .inf','#mirrorText','#grantLine','#sealHint','.jarbtn',
      '.goldbtn','.pbtn','.schip','.pname'].forEach(function(sel){
       var els = d.querySelectorAll(sel);
-      for (var i = 0; i < els.length; i++){ ftLetterize(els[i], 'char', 17, 90); if (fio) fio.observe(els[i]); else els[i].classList.add('ftv'); }
+      for (var i = 0; i < els.length; i++){ ftLetterize(els[i], 'char', 42, 110); if (fio) fio.observe(els[i]); else els[i].classList.add('ftv'); }
     });
     /* card-overlay buttons write in when the first card opens (.open trigger, no observer) */
-    ftLetterize(d.querySelector('.evb'), 'char', 17, 260);
-    ftLetterize(d.querySelector('.nextb'), 'char', 17, 260);
+    ftLetterize(d.querySelector('.evb'), 'char', 40, 380);
+    ftLetterize(d.querySelector('.nextb'), 'char', 40, 380);
 
     /* — photo captions ride the existing .vis reveal — */
-    eachSeq('.photo .cap', [['.q','char',40,170],['.who','char',22,210],['.aside','char',12,0]], 0, false);
+    eachSeq('.photo .cap', [['.q','char',80,300],['.who','char',48,360],['.aside','char',34,0]], 0, false);
 
     /* — interaction-revealed text: writes at the moment it is uncovered — */
-    eachSeq('.env .note', [['.','char',13,0]], 0, false);          /* envelope opens */
-    eachSeq('.fitem .fbody', [['.','char',12,0]], 0, false);        /* first unfolds */
-    eachSeq('.promise', [['.','char',13,0]], 0, false);             /* promise sworn */
-    ftLetterize(d.querySelector('.psworn'), 'word', 150, 90);
-    ftLetterize(d.querySelector('#meterErr'), 'char', 20, 90);
-    ftLetterize(d.querySelector('#meterSub'), 'char', 12, 420);
-    ftLetterize(d.querySelector('.delivcard'), 'char', 13, 90);
-    seq(d.getElementById('letter'), [['.to','word',160,180],
-      ['p:nth-of-type(1)','char',13,220],['p:nth-of-type(2)','char',13,220],
-      ['p:nth-of-type(3)','char',13,220],['.sig','word',170,140],['.ps','char',22,0]], 450, false);
+    eachSeq('.env .note', [['.','char',36,0]], 0, false);          /* envelope opens */
+    eachSeq('.fitem .fbody', [['.','char',34,0]], 0, false);        /* first unfolds */
+    eachSeq('.promise', [['.','char',36,0]], 0, false);             /* promise sworn */
+    ftLetterize(d.querySelector('.psworn'), 'word', 280, 120);
+    ftLetterize(d.querySelector('#meterErr'), 'char', 46, 120);
+    ftLetterize(d.querySelector('#meterSub'), 'char', 34, 650);
+    ftLetterize(d.querySelector('.delivcard'), 'char', 34, 120);
+    seq(d.getElementById('letter'), [['.to','word',300,320],
+      ['p:nth-of-type(1)','char',38,380],['p:nth-of-type(2)','char',38,380],
+      ['p:nth-of-type(3)','char',38,380],['.sig','word',300,260],['.ps','char',50,0]], 600, false);
+
+    /* — glitter shakes loose from every fresh letter (wand-trail) — */
+    if (!reduced){
+      var live = 0, GL = ['✦','✧','✦','·','✧'];
+      d.addEventListener('animationstart', function(e){
+        if (e.animationName !== 'ftInk' || live > 44) return;
+        var el = e.target;
+        if (!el.classList.contains('ftg') && Math.random() < .6) return;
+        var rc = el.getBoundingClientRect();
+        if (!rc.width && !rc.height) return;
+        var sp = d.createElement('span');
+        sp.className = 'ftsp';
+        sp.textContent = GL[(Math.random() * GL.length) | 0];
+        sp.style.left = (rc.left + rc.width * Math.random()) + 'px';
+        sp.style.top = (rc.top - 2) + 'px';
+        sp.style.fontSize = (7 + Math.random() * 6) + 'px';
+        sp.style.color = Math.random() < .5 ? '#FFF9E8' : (Math.random() < .5 ? '#F7E3BF' : '#F2A9B4');
+        sp.style.setProperty('--sx', (Math.random() * 48 - 24).toFixed(0) + 'px');
+        sp.style.setProperty('--sy', (-(16 + Math.random() * 36)).toFixed(0) + 'px');
+        sp.style.setProperty('--sr', (Math.random() * 240 - 120).toFixed(0) + 'deg');
+        live++;
+        d.body.appendChild(sp);
+        setTimeout(function(){ if (sp.parentNode) sp.parentNode.removeChild(sp); live--; }, 1050);
+      });
+    }
 
     /* — ambient stardust drifting up through the whole tale — */
     if (!reduced){
@@ -1913,6 +1974,7 @@ function burst(n){
     var openTale = function(){
       if (opened) return;
       opened = true;
+      toTop();                              /* just in case the browser slipped a restore through */
       cover.classList.add('go');            /* the cover dissolves… */
       d.body.classList.remove('ft-lock');
       docEl.classList.add('tale');          /* …and the hero blooms in, line by line */
