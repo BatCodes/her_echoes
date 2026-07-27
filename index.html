@@ -356,6 +356,99 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gold);outl
 <canvas id="sky"></canvas>
 <div id="grain"></div>
 
+<!-- ═══════════════ ONCE UPON A TIME · storybook cover ═══════════════ -->
+<style id="ftStyle">
+html{scroll-behavior:smooth}
+.ft-lock{overflow:hidden}
+.ftcover{position:fixed;inset:0;z-index:55;display:flex;align-items:center;justify-content:center;padding:26px;cursor:pointer;
+  background:radial-gradient(130% 95% at 50% 6%,#1E1745 0%,var(--night) 55%,var(--ink) 100%);
+  transition:opacity .95s ease,visibility .95s}
+.ftcover.go{opacity:0;visibility:hidden;pointer-events:none}
+.ftstars{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.ftstars span{position:absolute;color:var(--gold);opacity:.5;text-shadow:0 0 12px rgba(238,192,122,.5)}
+.ftcard{position:relative;max-width:340px;text-align:center;padding:40px 30px 34px;border:1px solid var(--line);border-radius:20px;
+  background:linear-gradient(165deg,rgba(34,27,68,.55),rgba(20,16,44,.85));
+  box-shadow:0 0 0 5px rgba(238,192,122,.06),0 0 60px rgba(238,192,122,.08),0 26px 70px rgba(0,0,0,.6)}
+.ftcard::before,.ftcard::after{content:"✦";position:absolute;color:var(--gold);opacity:.75;font-size:13px}
+.ftcard::before{top:10px;left:14px}.ftcard::after{bottom:10px;right:14px}
+.ftcrown{width:56px;margin:0 auto 6px;display:block}
+.fteye{font-family:'Great Vibes',cursive;font-size:32px;color:var(--blush);line-height:1.1}
+.fttitle{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-size:25px;line-height:1.42;color:var(--pale);margin:10px 0 2px}
+.ftswash{display:block;width:130px;margin:10px auto 12px}
+.ftsub{font-family:'Lora',Georgia,serif;font-style:italic;font-size:13px;line-height:1.7;color:var(--mist)}
+.ftcta{margin-top:24px;font-family:'Poppins',sans-serif;font-size:10.5px;font-weight:500;letter-spacing:4px;text-transform:uppercase;color:var(--gold)}
+@media (prefers-reduced-motion: no-preference){
+  .ftcard{animation:ftFloat 6.5s ease-in-out infinite}
+  .ftstars span{animation:ftTw 3s ease-in-out infinite}
+  .ftcta{animation:ftPulse 2.4s ease-in-out infinite}
+  .ftcover.go .ftcard{transform:scale(1.07);opacity:0;filter:blur(9px);transition:transform .85s ease,opacity .85s ease,filter .85s ease;animation:none}
+  @keyframes ftFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+  @keyframes ftTw{0%,100%{opacity:.18;transform:scale(.85)}50%{opacity:.95;transform:scale(1.12)}}
+  @keyframes ftPulse{0%,100%{opacity:.55;text-shadow:none}50%{opacity:1;text-shadow:0 0 18px rgba(238,192,122,.55)}}
+
+  /* — hero blooms in like the first page of the tale — */
+  html.ft .hero>*:not(.ftlz){opacity:0;transform:translateY(16px);filter:blur(7px)}
+  html.tale .hero>*:not(.ftlz){opacity:1;transform:none;filter:none;transition:opacity 1.05s ease,transform 1.05s ease,filter 1.05s ease}
+  html.tale .hero>*:nth-child(1){transition-delay:.25s}
+  html.tale .hero>*:nth-child(2){transition-delay:.38s}
+  html.tale .hero>*:nth-child(3){transition-delay:.51s}
+  html.tale .hero>*:nth-child(4){transition-delay:.64s}
+  html.tale .hero>*:nth-child(5){transition-delay:.77s}
+  html.tale .hero>*:nth-child(6){transition-delay:.90s}
+  html.tale .hero>*:nth-child(7){transition-delay:1.03s}
+  html.tale .hero>*:nth-child(8){transition-delay:1.16s}
+  html.tale .hero>*:nth-child(9){transition-delay:1.29s}
+  html.tale .hero>*:nth-child(10){transition-delay:1.42s}
+
+  /* — chapter headings (fallback if ink-writing is unavailable) — */
+  html.ft .shead .fl:not(.ftlz),html.ft .shead h2:not(.ftlz),html.ft .shead p:not(.ftlz){opacity:0;transform:translateY(14px);filter:blur(6px);
+    transition:opacity .95s ease,transform .95s ease,filter .95s ease,text-shadow .95s ease}
+  html.ft .shead.vis .fl:not(.ftlz){opacity:1;transform:none;filter:none;transition-delay:.05s}
+  html.ft .shead.vis h2:not(.ftlz){opacity:1;transform:none;filter:none;text-shadow:0 0 26px rgba(238,192,122,.26);transition-delay:.24s}
+  html.ft .shead.vis p:not(.ftlz){opacity:1;transform:none;filter:none;transition-delay:.46s}
+
+  /* — enchanted ink: every letter writes itself onto the page — */
+  html.ft .ftl{opacity:0;display:inline-block;transform:translateY(.34em) rotate(3deg) scale(.88);filter:blur(4px)}
+  html.ft .vis .ftl,html.tale #bigname .ftl{animation:ftInk .68s cubic-bezier(.22,.75,.28,1) forwards;animation-delay:var(--d,0ms)}
+  @keyframes ftInk{
+    0%{opacity:0;transform:translateY(.34em) rotate(3deg) scale(.88);filter:blur(4px);text-shadow:0 0 16px rgba(238,192,122,.95)}
+    55%{opacity:1;filter:blur(0);text-shadow:0 0 15px rgba(238,192,122,.55)}
+    100%{opacity:1;transform:none;filter:none;text-shadow:0 0 8px rgba(238,192,122,.15)}
+  }
+
+  /* — the little gold dividers draw themselves between chapters — */
+  html.ft .divider{opacity:0;transform:scale(.7);transition:opacity 1.1s ease,transform 1.1s ease}
+  html.ft .divider.vis{opacity:1;transform:none}
+}
+</style>
+
+<div class="ftcover" id="ftCover" role="button" tabindex="0" aria-label="Open the tale">
+  <div class="ftstars" aria-hidden="true">
+    <span style="left:8%;top:14%;font-size:11px">✦</span>
+    <span style="left:22%;top:72%;font-size:9px;animation-delay:.7s">✧</span>
+    <span style="left:38%;top:8%;font-size:8px;animation-delay:1.3s">✦</span>
+    <span style="left:64%;top:18%;font-size:12px;animation-delay:.4s">✧</span>
+    <span style="left:82%;top:34%;font-size:9px;animation-delay:1.8s">✦</span>
+    <span style="left:74%;top:80%;font-size:11px;animation-delay:1s">✦</span>
+    <span style="left:12%;top:44%;font-size:8px;animation-delay:2.2s">✧</span>
+    <span style="left:90%;top:62%;font-size:8px;animation-delay:1.5s">✧</span>
+  </div>
+  <div class="ftcard">
+    <svg class="ftcrown" viewBox="0 0 110 62" aria-hidden="true">
+      <path d="M8 52 L14 20 L34 40 L55 8 L76 40 L96 20 L102 52 Z" fill="none" stroke="#EEC07A" stroke-width="2.5" stroke-linejoin="round"/>
+      <rect x="8" y="52" width="94" height="6" rx="3" fill="#EEC07A"/>
+      <circle cx="55" cy="8" r="4" fill="#F2A9B4"/><circle cx="14" cy="20" r="3" fill="#F2A9B4"/><circle cx="96" cy="20" r="3" fill="#F2A9B4"/>
+    </svg>
+    <div class="fteye">once upon a time</div>
+    <div class="fttitle">there lived a princess<br>who never knew<br>she was the whole story</div>
+    <svg class="ftswash" viewBox="0 0 160 16" aria-hidden="true"><path d="M4 8 C 40 15, 62 2, 80 8 C 98 14, 120 1, 156 8" fill="none" stroke="#EEC07A" stroke-width="1.1" opacity=".7"/><circle cx="80" cy="8" r="1.8" fill="#F2A9B4"/></svg>
+    <div class="ftsub">so the stars wrote it down —<br>every echo of her.</div>
+    <div class="ftcta">✦&nbsp; touch the stars to begin &nbsp;✦</div>
+  </div>
+</div>
+<noscript><style>.ftcover{display:none}</style></noscript>
+<!-- ═══════════════ end storybook cover ═══════════════ -->
+
 <div class="wrap">
 
   <!-- HERO -->
@@ -1651,6 +1744,127 @@ function burst(n){
 })();
 </script>
 <!-- ═══════════ end OUR SONGS widget ═══════════ -->
+
+<script>
+(function(){
+  /* ═══ ONCE UPON A TIME · fairytale opening & transitions ═══ */
+  var d = document, docEl = d.documentElement;
+  var reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var cover = d.getElementById('ftCover');
+  docEl.classList.add('ft');
+
+  /* ── enchanted ink: wrap each letter (or word, for cursive script) in a timed span ── */
+  function ftLetterize(el, mode, step, start){
+    if (!el || el.classList.contains('ftlz')) return start;
+    var t = start;
+    (function walk(node){
+      var kids = [].slice.call(node.childNodes);
+      for (var i = 0; i < kids.length; i++){
+        var n = kids[i];
+        if (n.nodeType === 3){
+          var parts = mode === 'word' ? n.nodeValue.split(/(\s+)/) : Array.from(n.nodeValue);
+          var holder = d.createDocumentFragment();
+          for (var k = 0; k < parts.length; k++){
+            var ch = parts[k];
+            if (!ch) continue;
+            if (/^\s+$/.test(ch)){ holder.appendChild(d.createTextNode(ch)); continue; }
+            var s = d.createElement('span');
+            s.className = 'ftl';
+            s.textContent = ch;
+            s.style.setProperty('--d', t + 'ms');
+            t += step;
+            holder.appendChild(s);
+          }
+          node.replaceChild(holder, n);
+        } else if (n.nodeType === 1 && n.nodeName !== 'BR'){
+          walk(n);
+        }
+      }
+    })(el);
+    el.classList.add('ftlz');
+    return t;
+  }
+
+  /* prepare every chapter heading: script signs first, the title writes, then the words */
+  try{
+    var allHeads = d.querySelectorAll('.shead');
+    for (var p0 = 0; p0 < allHeads.length; p0++){
+      var hd = allHeads[p0], tt = 120;
+      tt = ftLetterize(hd.querySelector('.fl'), 'word', 130, tt);
+      tt += 170;
+      tt = ftLetterize(hd.querySelector('h2'), 'char', 52, tt);
+      hd.dataset.ftH2End = tt;
+      tt += 230;
+      ftLetterize(hd.querySelector('p'), 'char', 12, tt);
+    }
+    /* her name writes itself, letter by letter, as the tale opens */
+    var big = d.getElementById('bigname');
+    if (big) big.dataset.ftEnd = ftLetterize(big, 'char', 170, 900);
+  }catch(err){}
+
+  if (cover){
+    d.body.classList.add('ft-lock');
+    var opened = false;
+    var openTale = function(){
+      if (opened) return;
+      opened = true;
+      cover.classList.add('go');            /* the cover dissolves… */
+      d.body.classList.remove('ft-lock');
+      docEl.classList.add('tale');          /* …and the hero blooms in, line by line */
+      if (!reduced){
+        try{
+          var r = cover.querySelector('.ftcard').getBoundingClientRect();
+          setTimeout(function(){ sparkleAt(r); burst(16); }, 140);
+          setTimeout(function(){ sparkleAt(r); }, 460);
+          var big2 = d.getElementById('bigname');
+          if (big2 && big2.dataset.ftEnd){
+            setTimeout(function(){ try{ sparkleAt(big2.getBoundingClientRect()); }catch(e2){} },
+              parseInt(big2.dataset.ftEnd, 10) + 150);
+          }
+        }catch(err){}
+      }
+      setTimeout(function(){ if (cover.parentNode) cover.parentNode.removeChild(cover); }, reduced ? 80 : 1050);
+    };
+    /* this same first touch also wakes the music — the song swells as the tale opens */
+    cover.addEventListener('pointerdown', openTale);
+    cover.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); openTale(); }
+    });
+  } else {
+    docEl.classList.add('tale');
+  }
+
+  /* chapter dividers draw in, and each heading blooms with a little stardust */
+  if ('IntersectionObserver' in window){
+    var dio = new IntersectionObserver(function(es){
+      es.forEach(function(en){
+        if (!en.isIntersecting) return;
+        en.target.classList.add('vis');
+        dio.unobserve(en.target);
+      });
+    }, { threshold: .5 });
+    var divs = d.querySelectorAll('.divider');
+    for (var i = 0; i < divs.length; i++) dio.observe(divs[i]);
+
+    var sio = new IntersectionObserver(function(es){
+      es.forEach(function(en){
+        if (!en.isIntersecting) return;
+        sio.unobserve(en.target);
+        if (reduced) return;
+        var h = en.target.querySelector('h2');
+        if (!h) return;
+        var end = parseInt(en.target.dataset.ftH2End || '700', 10);
+        setTimeout(function(){ try{ sparkleAt(h.getBoundingClientRect()); }catch(err){} }, Math.max(420, end - 220));
+      });
+    }, { threshold: .35 });
+    var sh = d.querySelectorAll('.shead');
+    for (var j = 0; j < sh.length; j++) sio.observe(sh[j]);
+  } else {
+    var dv = d.querySelectorAll('.divider');
+    for (var k = 0; k < dv.length; k++) dv[k].classList.add('vis');
+  }
+})();
+</script>
 
 </body>
 </html>
