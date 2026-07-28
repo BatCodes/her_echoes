@@ -31,6 +31,17 @@ button{font-family:inherit;border:none;background:none;color:inherit;cursor:poin
 button:focus-visible,.tile:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gold);outline-offset:3px;border-radius:14px}
 #sky{position:fixed;inset:0;z-index:0;pointer-events:none}
 #deepen{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0;background:linear-gradient(180deg,rgba(8,6,20,0) 0%,rgba(7,5,18,.5) 60%,rgba(5,4,14,.75) 100%)}
+#nebula{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#nebula i{position:absolute;border-radius:50%;display:block}
+#nebula .n1{left:-20vw;top:-12vh;width:75vw;height:55vh;background:radial-gradient(closest-side,rgba(74,58,140,.34),transparent 70%)}
+#nebula .n2{right:-18vw;top:30vh;width:65vw;height:50vh;background:radial-gradient(closest-side,rgba(238,192,122,.11),transparent 70%)}
+#nebula .n3{left:22vw;bottom:-16vh;width:70vw;height:46vh;background:radial-gradient(closest-side,rgba(242,169,180,.09),transparent 72%)}
+@media (prefers-reduced-motion: no-preference){
+  #nebula .n1{animation:nebDrift 52s ease-in-out infinite alternate}
+  #nebula .n2{animation:nebDrift 64s ease-in-out infinite alternate-reverse}
+  #nebula .n3{animation:nebDrift 74s ease-in-out infinite alternate}
+}
+@keyframes nebDrift{from{transform:translate3d(0,0,0) scale(1)}to{transform:translate3d(5vw,-4vh,0) scale(1.08)}}
 #grain{position:fixed;inset:-50%;z-index:2;pointer-events:none;opacity:.05;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='240' height='240' filter='url(%23n)' opacity='.6'/%3E%3C/svg%3E")}
 .wrap{position:relative;z-index:1;max-width:540px;margin:0 auto;padding:0 22px}
 section{padding:84px 0}
@@ -365,6 +376,7 @@ button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--gold);outl
 </style>
 </head>
 <body>
+<div id="nebula" aria-hidden="true"><i class="n1"></i><i class="n2"></i><i class="n3"></i></div>
 <canvas id="sky"></canvas>
 <div id="grain"></div>
 <div id="deepen" aria-hidden="true"></div>
@@ -421,11 +433,21 @@ html{scroll-behavior:smooth}
   html.ft .shead.vis p:not(.ftlz){opacity:1;transform:none;filter:none;transition-delay:.46s}
 
   /* — enchanted ink: every letter is conjured onto the page — */
-  html.ft .ftl{--gc:238,192,122;opacity:0;display:inline-block;transform:translateY(.45em) rotate(var(--r,4deg)) scale(.55);filter:blur(6px)}
+  html.ft .ftl{--gc:238,192,122;opacity:0;display:inline-block;transform:translateY(.45em) rotate(var(--r,4deg)) scale(.55)}
   html.ft .ftl.ftg{--gc:242,169,180}
   html.ft :is(.vis,.ftv,.in,.on,.open,.show) .ftl,
-  html.tale .hero .ftl{animation:ftInk .85s cubic-bezier(.2,.7,.25,1.15) forwards;animation-delay:var(--d,0ms)}
+  html.tale .hero .ftl{animation:ftInk .7s cubic-bezier(.2,.7,.25,1.15) forwards;animation-delay:var(--d,0ms)}
+  /* body text: transform+opacity only — the GPU composites hundreds of letters for free */
   @keyframes ftInk{
+    0%{opacity:0;transform:translateY(.45em) rotate(var(--r,4deg)) scale(.55)}
+    55%{opacity:1;transform:translateY(-.08em) rotate(calc(var(--r,4deg)*-.4)) scale(1.12)}
+    100%{opacity:1;transform:translateY(0) rotate(0deg) scale(1)}
+  }
+  /* the white-hot golden flash is reserved for headings and her name — few letters, full glamour */
+  html.ft .ftl.rich{filter:blur(6px)}
+  html.ft :is(.vis,.ftv,.in,.on,.open,.show) .ftl.rich,
+  html.tale .hero .ftl.rich{animation-name:ftInkRich}
+  @keyframes ftInkRich{
     0%{opacity:0;transform:translateY(.45em) rotate(var(--r,4deg)) scale(.55);filter:blur(6px);
        text-shadow:0 0 4px rgba(255,255,255,.95),0 0 20px rgba(var(--gc),1)}
     45%{opacity:1;transform:translateY(-.09em) rotate(calc(var(--r,4deg)*-.4)) scale(1.16);filter:blur(0);
@@ -944,14 +966,37 @@ function armGyro(){
 }
 addEventListener('pointerdown', function once(){ removeEventListener('pointerdown', once); armGyro(); });
 
+/* pre-baked glow sprites: one gradient paint each, then drawImage forever — no per-frame path fills */
+function makeSprite(rgb, size, flare){
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const g = c.getContext('2d'), h = size/2;
+  const rad = g.createRadialGradient(h,h,0,h,h,h);
+  rad.addColorStop(0,'rgba(255,246,220,1)'); rad.addColorStop(.28,'rgba('+rgb+',.8)'); rad.addColorStop(1,'rgba('+rgb+',0)');
+  g.fillStyle = rad; g.fillRect(0,0,size,size);
+  if(flare){
+    g.strokeStyle = 'rgba('+rgb+',.7)'; g.lineWidth = size/34; g.lineCap = 'round';
+    g.beginPath(); g.moveTo(h,size*.05); g.lineTo(h,size*.95); g.moveTo(size*.05,h); g.lineTo(size*.95,h); g.stroke();
+  }
+  return c;
+}
+const SPR = {
+  '238,192,122': makeSprite('238,192,122',64),
+  '242,169,180': makeSprite('242,169,180',64),
+  '195,188,224': makeSprite('195,188,224',64),
+  hero: makeSprite('255,217,160',96,true)
+};
+let heros = [];
 function sky(){
-  /* the old canvas ignored devicePixelRatio — every star was blurry on every phone */
-  const dpr = Math.min(devicePixelRatio||1, 2);
+  /* crisp where the phone can afford it, light where it can't */
+  const mem = navigator.deviceMemory || 4;
+  const dpr = Math.min(devicePixelRatio||1, mem >= 6 ? 2 : 1.5);
   W = innerWidth; H = innerHeight;
   cv.width = W*dpr; cv.height = H*dpr;
   cv.style.width = W+'px'; cv.style.height = H+'px';
   cx.setTransform(dpr,0,0,dpr,0,0);
   stars = Array.from({length:110},()=>({x:Math.random()*W,y:Math.random()*H,z:.25+Math.random()*.75,r:Math.random()*1.5+.4,p:Math.random()*Math.PI*2,s:.4+Math.random()*1.2,g:Math.random()<.62?'238,192,122':(Math.random()<.5?'242,169,180':'195,188,224')}));
+  /* seven named stars — the ones that flare */
+  heros = Array.from({length:7},()=>({x:Math.random()*W,y:Math.random()*H*.85,s:8+Math.random()*7,p:Math.random()*Math.PI*2,sp:.3+Math.random()*.5}));
 }
 sky(); addEventListener('resize', sky);
 const deepenEl = document.getElementById('deepen');
@@ -961,15 +1006,27 @@ let lastDeep = -1;
   /* the night deepens as she reads toward the letter */
   const dmax = document.documentElement.scrollHeight - innerHeight;
   const prog = dmax>0 ? par.sy/dmax : 0;
-  if(deepenEl && Math.abs(prog-lastDeep)>.01){ lastDeep = prog; deepenEl.style.opacity = (prog*.5).toFixed(2); }
+  if(deepenEl && Math.abs(prog-lastDeep)>.01){ lastDeep = prog; deepenEl.style.opacity = (prog*.62).toFixed(2); }
   const ox = par.gyro?par.tx:par.px, oy = par.gyro?par.ty:par.py;
   for(const s of stars){
     const a = reduced? .5 : .26+.45*Math.abs(Math.sin(t/1400*s.s+s.p));
     /* nearer stars drift more — with her scroll, toward her hand */
     let x = s.x + ox*10*s.z, y = s.y - par.sy*.05*s.z - oy*8*s.z;
     x = ((x%W)+W)%W; y = ((y%H)+H)%H;
-    cx.beginPath(); cx.arc(x,y,s.r+s.z*.3,0,7); cx.fillStyle=`rgba(${s.g},${a})`; cx.fill();
+    const d2 = (s.r + s.z*.3) * 3.4;
+    cx.globalAlpha = a;
+    cx.drawImage(SPR[s.g], x-d2/2, y-d2/2, d2, d2);
   }
+  /* the flaring ones breathe slowly */
+  for(const hst of heros){
+    const a = reduced? .5 : .3+.38*Math.abs(Math.sin(t/1000*hst.sp+hst.p));
+    let x = hst.x + ox*13, y = hst.y - par.sy*.055 - oy*10;
+    x = ((x%W)+W)%W; y = ((y%H)+H)%H;
+    const d3 = hst.s*3.6;
+    cx.globalAlpha = a;
+    cx.drawImage(SPR.hero, x-d3/2, y-d3/2, d3, d3);
+  }
+  cx.globalAlpha = 1;
   if(!reduced){
     if(t>nextComet){ nextComet = t + 5200 + Math.random()*5200;
       comets.push({x:Math.random()*W*.7+W*.2, y:Math.random()*H*.3, vx:-(3.2+Math.random()*2.4), vy:1.6+Math.random()*1.2, life:1}); }
@@ -1829,7 +1886,7 @@ function burst(n){
   docEl.classList.add('ft');
 
   /* ── enchanted ink: wrap each letter (or word, for cursive script) in a timed span ── */
-  function ftLetterize(el, mode, step, start){
+  function ftLetterize(el, mode, step, start, rich){
     if (!el || el.classList.contains('ftlz')) return start;
     var t = start;
     (function walk(node){
@@ -1844,7 +1901,7 @@ function burst(n){
             if (!ch) continue;
             if (/^\s+$/.test(ch)){ holder.appendChild(d.createTextNode(ch)); continue; }
             var s = d.createElement('span');
-            s.className = Math.random() < .15 ? 'ftl ftg' : 'ftl';
+            s.className = (Math.random() < .15 ? 'ftl ftg' : 'ftl') + (rich ? ' rich' : '');
             s.textContent = ch;
             s.style.setProperty('--d', t + 'ms');
             s.style.setProperty('--r', (Math.random() * 12 - 6).toFixed(1) + 'deg');
@@ -1880,7 +1937,7 @@ function burst(n){
     for (var i = 0; i < list.length; i++){
       var el = list[i][0] === '.' ? root : root.querySelector(list[i][0]);
       if (!el) continue;
-      t = ftLetterize(el, list[i][1], list[i][2], t) + (list[i][3] || 140);
+      t = ftLetterize(el, list[i][1], list[i][2], t, list[i][4]) + (list[i][3] || 140);
     }
     if (observe){ if (fio) fio.observe(root); else root.classList.add('ftv'); }
     return t;
@@ -1896,12 +1953,12 @@ function burst(n){
     var allHeads = d.querySelectorAll('.shead');
     for (var p0 = 0; p0 < allHeads.length; p0++){
       var hd = allHeads[p0], tt = 120;
-      tt = ftLetterize(hd.querySelector('.fl'), 'word', 130, tt);
+      tt = ftLetterize(hd.querySelector('.fl'), 'word', 130, tt, true);
       tt += 170;
-      tt = ftLetterize(hd.querySelector('h2'), 'char', 52, tt);
+      tt = ftLetterize(hd.querySelector('h2'), 'char', 52, tt, true);
       hd.dataset.ftH2End = tt;
       tt += 230;
-      ftLetterize(hd.querySelector('p'), 'char', 12, tt);
+      ftLetterize(hd.querySelector('p'), 'word', 60, tt);
     }
 
     /* — the hero writes itself as the tale opens (nastaliq stays whole, on purpose) — */
@@ -1909,20 +1966,20 @@ function burst(n){
     if (hero){
       var ht = 350;
       ht = ftLetterize(hero.querySelector('.mooncorner .lbl'), 'char', 28, ht) + 120;
-      ht = ftLetterize(hero.querySelector('.for'), 'word', 150, Math.max(ht, 600)) + 150;
-      if (big){ ht = ftLetterize(big, 'char', 170, Math.max(ht, 900)); big.dataset.ftEnd = ht; ht += 260; }
-      ht = ftLetterize(hero.querySelector('.crest'), 'char', 22, ht) + 160;
-      ht = ftLetterize(hero.querySelector('.sub'), 'char', 20, ht) + 160;
+      ht = ftLetterize(hero.querySelector('.for'), 'word', 150, Math.max(ht, 600), true) + 150;
+      if (big){ ht = ftLetterize(big, 'char', 170, Math.max(ht, 900), true); big.dataset.ftEnd = ht; ht += 260; }
+      ht = ftLetterize(hero.querySelector('.crest'), 'word', 90, ht) + 160;
+      ht = ftLetterize(hero.querySelector('.sub'), 'word', 80, ht) + 160;
       ftLetterize(hero.querySelector('.begin'), 'word', 130, ht);
     }
 
     /* — scroll-revealed blocks (viewport-triggered) — */
     eachSeq('.tile', [['.cat','char',34,120],['.ans','char',34,0]], 150, true);
     eachSeq('.fitem', [['.fdate','char',22,110],['.ftitle','char',22,0]], 130, true);
-    eachSeq('.steps li', [['.','char',13,0]], 260, true);
-    seq(d.querySelector('.decree'), [['.dk','char',26,150],['h3','char',46,200],
-      ['p:nth-of-type(1)','char',12,180],['p:nth-of-type(2)','char',12,180],
-      ['.dsign','word',170,120],['.dwit','char',18,0]], 90, true);
+    eachSeq('.steps li', [['.','word',70,0]], 260, true);
+    seq(d.querySelector('.decree'), [['.dk','char',26,150],['h3','char',46,200,true],
+      ['p:nth-of-type(1)','word',60,180],['p:nth-of-type(2)','word',60,180],
+      ['.dsign','word',170,120,true],['.dwit','char',18,0]], 90, true);
     ['.counter','.counterhint','.hintl','.skycap','.gcount','.ptitle','.pcount','.footnote',
      '.holdhint','.finale .k','.finale .inf','#mirrorText','#grantLine','#sealHint','.jarbtn',
      '.goldbtn','.pbtn','.schip','.pname'].forEach(function(sel){
@@ -1934,19 +1991,19 @@ function burst(n){
     ftLetterize(d.querySelector('.nextb'), 'char', 17, 260);
 
     /* — photo captions ride the existing .vis reveal — */
-    eachSeq('.photo .cap', [['.q','char',40,170],['.who','char',22,210],['.aside','char',12,0]], 0, false);
+    eachSeq('.photo .cap', [['.q','char',40,170,true],['.who','char',22,210],['.aside','word',60,0]], 0, false);
 
     /* — interaction-revealed text: writes at the moment it is uncovered — */
-    eachSeq('.env .note', [['.','char',13,0]], 0, false);          /* envelope opens */
-    eachSeq('.fitem .fbody', [['.','char',12,0]], 0, false);        /* first unfolds */
-    eachSeq('.promise', [['.','char',13,0]], 0, false);             /* promise sworn */
-    ftLetterize(d.querySelector('.psworn'), 'word', 150, 90);
+    eachSeq('.env .note', [['.','word',60,0]], 0, false);          /* envelope opens */
+    eachSeq('.fitem .fbody', [['.','word',55,0]], 0, false);        /* first unfolds */
+    eachSeq('.promise', [['.','word',60,0]], 0, false);             /* promise sworn */
+    ftLetterize(d.querySelector('.psworn'), 'word', 150, 90, true);
     ftLetterize(d.querySelector('#meterErr'), 'char', 20, 90);
-    ftLetterize(d.querySelector('#meterSub'), 'char', 12, 420);
-    ftLetterize(d.querySelector('.delivcard'), 'char', 13, 90);
-    seq(d.getElementById('letter'), [['.to','word',160,180],
-      ['p:nth-of-type(1)','char',13,220],['p:nth-of-type(2)','char',13,220],
-      ['p:nth-of-type(3)','char',13,220],['.sig','word',170,140],['.ps','char',22,0]], 450, false);
+    ftLetterize(d.querySelector('#meterSub'), 'word', 55, 420);
+    ftLetterize(d.querySelector('.delivcard'), 'word', 60, 90);
+    seq(d.getElementById('letter'), [['.to','word',160,180,true],
+      ['p:nth-of-type(1)','word',60,220],['p:nth-of-type(2)','word',60,220],
+      ['p:nth-of-type(3)','word',60,220],['.sig','word',170,140,true],['.ps','char',22,0]], 450, false);
 
     /* — ambient stardust drifting up through the whole tale — */
     if (!reduced){

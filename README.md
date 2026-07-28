@@ -1,9 +1,19 @@
-# her echoes ✦ v1.5.1
+# her echoes ✦ v1.6
 
 A little kingdom in **one file**. `index.html` is the whole site — no build,
 no framework, nothing to install. Open it anywhere and the tale plays.
 
-## What v1.5.1 adds over the night's v1.5 (pure addition — nothing removed)
+## What v1.6 adds (pure addition — nothing removed)
+
+- **Butter** — the enchanted ink is now GPU-composited for body text (the golden
+  flash stays on headings and her name, where it reads); long passages write in
+  by word; stars draw from pre-baked glow sprites; pixel density adapts to the
+  phone. Strictly less work per frame than v1.5.
+- **Depth** — three nebula washes drift behind the starfield (indigo mist, faint
+  gold, blush) and seven named stars flare and breathe. The night visibly
+  deepens as she reads.
+
+## And from v1.5.1
 
 - **Crisp stars** — the sky canvas now renders at the phone's real pixel density
   (it was blurry on every phone before; this was the one true defect).
