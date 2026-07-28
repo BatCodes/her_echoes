@@ -1,83 +1,55 @@
-# her echoes ✦ v1.8
+# her echoes ✦ v3
 
-A little kingdom in **one file**. `index.html` is the whole site — no build,
-no framework, nothing to install. Open it anywhere and the tale plays.
+One link. One kingdom. **https://batcodes.github.io/her_echoes/**
 
-## What v1.7 adds — the toys grow up (pure addition — nothing removed)
+The contemporary remake is now the site: Vite + React + TypeScript,
+WebGL starfield with camera push-through and comet trails, Lenis inertial
+scroll, GSAP choreography, matter-js jar physics — and the enchanted ink,
+the quill, and every word of the tale, carried over whole.
 
-- **The star jar is real** — thirteen stars tumble and settle under real physics;
-  tap and one escapes through the mouth and dissolves before the memory unfolds;
-  shake the phone and they scatter.
-- **The meter performs** — a breath back, the hard sweep, overshoot, a tremble
-  against the stop, then it slams straight through 100% with a gold flash at the
-  edges of the screen.
-- **The letter unfolds in 3D** before the ink writes it.
-- **Truth cards grow out of the tile she touched** (shared-element morph), and
-  tiles tilt with a moving glare under a desktop pointer.
-- **Photographs ride her scroll** — parallax she causes, replacing the looping zoom.
-- **The vinyl wears a gold progress ring** that fills as the song plays.
-- **Desktop polish** — magnetic gold buttons, a faint star trailing the cursor.
-
-## And from v1.6
-
-- **Butter** — the enchanted ink is now GPU-composited for body text (the golden
-  flash stays on headings and her name, where it reads); long passages write in
-  by word; stars draw from pre-baked glow sprites; pixel density adapts to the
-  phone. Strictly less work per frame than v1.5.
-- **Depth** — three nebula washes drift behind the starfield (indigo mist, faint
-  gold, blush) and seven named stars flare and breathe. The night visibly
-  deepens as she reads.
-
-## And from v1.5.1
-
-- **Crisp stars** — the sky canvas now renders at the phone's real pixel density
-  (it was blurry on every phone before; this was the one true defect).
-- **A living sky** — stars drift with her scroll, lean toward her hand on desktop
-  and with the phone's tilt on mobile (after her first touch); comets grew real
-  glowing tails; the night deepens the further she reads.
-- **The unfurl works** — proper OG tags + icons, so sharing the link on WhatsApp
-  shows her name under the stars (`og.png`) instead of nothing.
-- **The song on a little screen** — the music player now shows the video inside
-  the panel (display-only) instead of hiding it.
-- **A hum under her thumb** — gentle haptics on the moments that land: evidence
-  found, seal broken, meter blown, envelope opened, the letter revealed.
-
-Everything from v1.5 is untouched: the storybook cover, the enchanted ink that
-writes every letter onto the page, the stardust, the cream papers, all of it.
-
-## Editing
-
-Open `index.html`. Everything she reads lives in plain arrays near the top of
-the main `<script>` — `ITEMS` (eight truths), `MEMS` (star jar), `FIRSTS`,
-`CONF`, `PROMISES`, `LINES` (mirror), `DELIV`, `SCENES` (replays), `GRANTS` —
-and the songs in `OUR_SONGS` inside the music widget (one line per song:
-title, artist, YouTube id, optional backup id).
-
-Change the words → save → upload `index.html` → done. That's the whole pipeline.
-
-## Repo layout
+## What lives where
 
 ```
-index.html           ← the site. the whole site.
-og.png               ← the WhatsApp/link preview image
-favicon.svg, apple-touch-icon.png, 404.html, robots.txt, .nojekyll
+/                    ← the BUILT site (what GitHub Pages serves)
+/assets              ← ⚠ the site's JS, CSS and fonts — the page is blank without it
+/app                 ← the source code (edit here)
+/app/src/content.ts  ← every word on the site lives in this one file
+/app/src/lib/ink.ts  ← the enchanted ink & travelling quill
+/app/src/lib/motion.ts ← the motion language — one hand animates everything
 ```
 
-GitHub Pages serves the repo root from `main` — upload/commit `index.html`
-and it's live in a minute.
+## Editing the words
 
-## The contemporary remake — side by side
+Everything she reads is in **`app/src/content.ts`**. Then:
 
-The Vite/React/WebGL remake now lives at **[/v2/](https://batcodes.github.io/her_echoes/v2/)**
-— same words, contemporary stack, with the enchanted ink and quill ported in.
-The root stays the beloved single file until the remake clearly wins by eye;
-flipping is one folder swap. Source: the `v2-react` branch.
+```bash
+cd app
+npm install        # first time only
+npm run dev        # live preview
+npm run release    # og + build + sync into the repo root → commit & push
+```
 
-## The React experiment
+Adding a song = one entry in `OUR_SONGS` (YouTube id + optional backup id).
 
-A full Vite/React/WebGL rebuild (v2.1, "the sky finally glows") lives on the
-[`v2-react`](../../tree/v2-react) branch — bloom, shader nebula, physics and
-all. It taught us the real lesson: this page's magic is the enchanted ink and
-the warmth, and one honest file carries them better than a framework.
+## The tale (the beloved single-file original)
+
+Preserved forever in git history — last shipped as **v1.8** at commit
+`31370f3` (`index.html`, fully self-contained). To resurrect it instantly:
+
+```bash
+git show 31370f3:index.html > index.html   # then commit & push
+```
+
+## Notes
+
+- **Privacy** — `noindex` meta + `robots.txt`.
+- **Tiers** — full WebGL sky + physics on capable devices; calm CSS sky
+  elsewhere; `prefers-reduced-motion` honored throughout.
+- **Music** — YouTube requires one tap before sound; the vinyl hint covers it.
+  The visible mini-player sits in the glass panel; audio keeps playing when closed.
+- **Verification** — every visual change gets screenshot-verified (phone
+  viewport, real interactions) before it ships. Hard-won rule.
+- If the page ever shows *“a piece of the sky is missing”*, the `assets/`
+  folder didn't make it up — re-upload it.
 
 made under one sky ✦
