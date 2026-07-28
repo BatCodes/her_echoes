@@ -63,6 +63,7 @@ export default function SongsPlayer() {
   const idxRef = useRef(idx)
   const started_ = useRef(false)
   const wired = useRef(false)
+  const errs = useRef(0)
 
   const persist = () => {
     const a = el.current
@@ -84,7 +85,7 @@ export default function SongsPlayer() {
     if (el.current) return el.current
     const a = new Audio()
     a.preload = 'none'
-    a.addEventListener('playing', () => { setPlaying(true); setNote('') })
+    a.addEventListener('playing', () => { setPlaying(true); setNote(''); errs.current = 0 })
     a.addEventListener('pause', () => { setPlaying(false); persist() })
     a.addEventListener('ended', () => next())
     a.addEventListener('timeupdate', () => {
@@ -93,6 +94,10 @@ export default function SongsPlayer() {
     a.addEventListener('error', () => {
       setPlaying(false)
       setNote('this song’s file isn’t in the vault yet ✦')
+      /* never dead-end on a missing song — drift to the next one,
+         but stop once the whole list has said no */
+      errs.current += 1
+      if (errs.current < OUR_SONGS.length) setTimeout(next, 1600)
     })
     el.current = a
     return a

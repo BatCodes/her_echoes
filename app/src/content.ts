@@ -254,15 +254,15 @@ export const GRANTS: string[] = [
 ]
 
 /* ── our songs · self-hosted, no ads, no video, ever ──
-   Drop the audio files into app/public/audio/ with these names
-   (AAC .m4a ≈96-128kbps — the one codec every phone decodes),
-   run the release, done. Until a file exists the player waits
-   gracefully and says so. */
+   Files live in app/public/audio/. The extension must match the
+   REAL container (these are 128kbps MP3s — .mp3, universally
+   decodable). Until a file exists the player says so gracefully
+   and moves on to the next song. */
 export interface Song { title: string; artist: string; src: string }
 export const OUR_SONGS: Song[] = [
-  { title: 'Him & I', artist: 'G-Eazy & Halsey', src: 'audio/him-and-i.m4a' },
-  { title: 'Achchi Lagti Ho', artist: 'Udit Narayan & Kavita Krishnamurthy', src: 'audio/achchi-lagti-ho.m4a' },
-  { title: 'Aarzu', artist: 'Noor, Khan & Madhurxo', src: 'audio/aarzu.m4a' },
+  { title: 'Him & I', artist: 'G-Eazy & Halsey', src: 'audio/him-and-i.mp3' },
+  { title: 'Achchi Lagti Ho', artist: 'Udit Narayan & Kavita Krishnamurthy', src: 'audio/achchi-lagti-ho.mp3' },
+  { title: 'Aarzu', artist: 'Noor, Khan & Madhurxo', src: 'audio/aarzu.mp3' },
 ]
 export const PLAYER_VOLUME = 35
 

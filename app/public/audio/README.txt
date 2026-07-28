@@ -1,14 +1,16 @@
 the vault of songs
 ──────────────────
-Drop the three audio files here with EXACTLY these names
-(AAC .m4a at ~96–128 kbps — every phone decodes it):
+Current residents (128kbps MP3):
 
-  him-and-i.m4a
-  achchi-lagti-ho.m4a
-  aarzu.m4a
+  him-and-i.mp3          ✓
+  achchi-lagti-ho.mp3    ✓
+  aarzu.mp3              — still awaited
 
-To add a song later: put its file here and add one entry to
-OUR_SONGS in app/src/content.ts. Nothing else.
+IMPORTANT: the file extension must match the REAL container.
+(The first two arrived as MP3s wearing .m4a names — renamed.)
+Quick check: an MP3 starts with "ID3" or 0xFF 0xFB; a real
+.m4a starts with "....ftyp".
 
-Until a file exists, the player waits gracefully and tells her
-"this song's file isn't in the vault yet ✦" — nothing breaks.
+To add a song: put its file here and add one entry to
+OUR_SONGS in app/src/content.ts. Nothing else. Until a file
+exists the player notes it gracefully and drifts to the next.
