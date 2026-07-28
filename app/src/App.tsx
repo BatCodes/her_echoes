@@ -5,6 +5,7 @@ import { reduced, tier } from './lib/prefs'
 import { initSmoothScroll } from './lib/scroll'
 import { installTapSparkles } from './lib/fx'
 import { installCursor, installMagnetics } from './lib/interact'
+import { installInk, markTale } from './lib/ink'
 import { armGyroOnGesture } from './lib/gyro'
 
 import Cover from './components/Cover'
@@ -44,11 +45,14 @@ export default function App() {
     installTapSparkles()
     installMagnetics()
     installCursor()
+    /* letterize the tale once everything has mounted (behind the cover, unseen) */
+    const inkTimer = setTimeout(installInk, 80)
     if (tier !== 'lite') {
       const arm = () => armGyroOnGesture()
       addEventListener('pointerdown', arm, { once: true })
-      return () => removeEventListener('pointerdown', arm)
+      return () => { removeEventListener('pointerdown', arm); clearTimeout(inkTimer) }
     }
+    return () => clearTimeout(inkTimer)
   }, [])
 
   /* a gentle extra veil for content contrast as the night deepens
@@ -69,6 +73,7 @@ export default function App() {
 
   const onOpen = () => {
     setOpened(true)
+    markTale() /* the hero's ink may flow */
     initSmoothScroll()
     requestAnimationFrame(() => ScrollTrigger.refresh())
   }

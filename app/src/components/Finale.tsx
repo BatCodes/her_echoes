@@ -3,6 +3,7 @@ import { LETTER, FINALE_BG } from '../content'
 import { gsap } from '../lib/gsapSetup'
 import { reduced } from '../lib/prefs'
 import { goldDust } from '../lib/fx'
+import { inkScan } from '../lib/ink'
 import { scrollToEl } from '../lib/scroll'
 
 export default function Finale() {
@@ -41,13 +42,17 @@ export default function Finale() {
       el.classList.remove('pre')
       el.classList.add('unfold')
     })
-    // act two — ink arrives while the paper settles
-    const lines = el.querySelectorAll<HTMLElement>('.inkline')
-    lines.forEach((line, i) => {
-      later(0.75 + i * 0.24, () => line.classList.add('on'))
-    })
-    // act three — one gold exhale from the letterhead, two slow waves
-    later(0.75 + lines.length * 0.24, () => {
+    // act two — the enchanted ink writes her letter, word by word, letter by letter
+    const end = inkScan(el, [
+      ['.to', 'word', 160, 180, true],
+      ['p:nth-of-type(1)', 'char', 13, 220],
+      ['p:nth-of-type(2)', 'char', 13, 220],
+      ['p:nth-of-type(3)', 'char', 13, 220],
+      ['.sig', 'word', 170, 140, true],
+      ['.ps', 'char', 22, 0],
+    ], 450)
+    // act three — one gold exhale as the ink dries, two slow waves
+    later(end / 1000 + 0.4, () => {
       const r = el.getBoundingClientRect()
       const cx = r.left + r.width / 2
       goldDust(cx, r.top, 18)
@@ -134,12 +139,12 @@ export default function Finale() {
         {done ? '♥ a letter, for your eyes only' : "press & hold — don't let go"}
       </div>
       <div ref={letter} className={'letter' + (done ? ' show' : '')}>
-        <div className="to inkline">{LETTER.to}</div>
-        <p className="inkline" dangerouslySetInnerHTML={{ __html: LETTER.p1 }} />
-        <p className="inkline" dangerouslySetInnerHTML={{ __html: LETTER.p2 }} />
-        <p className="inkline" dangerouslySetInnerHTML={{ __html: LETTER.p3 }} />
-        <div className="sig inkline">{LETTER.sig}</div>
-        <div className="ps inkline">{LETTER.ps}</div>
+        <div className="to">{LETTER.to}</div>
+        <p dangerouslySetInnerHTML={{ __html: LETTER.p1 }} />
+        <p dangerouslySetInnerHTML={{ __html: LETTER.p2 }} />
+        <p dangerouslySetInnerHTML={{ __html: LETTER.p3 }} />
+        <div className="sig">{LETTER.sig}</div>
+        <div className="ps">{LETTER.ps}</div>
         <svg className="waxstamp" viewBox="0 0 84 84" aria-hidden="true">
           <circle cx="42" cy="42" r="38" fill="#B85C74" />
           <circle cx="42" cy="42" r="38" fill="none" stroke="#8A4A64" strokeWidth="2.5" />

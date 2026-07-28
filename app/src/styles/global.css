@@ -607,6 +607,40 @@ h1.visually-hidden, .visually-hidden { position: absolute; width: 1px; height: 1
 .os-foot { font-size: 10.5px; font-style: italic; color: var(--color-dim); text-align: center; margin: 8px 0 0; }
 @media (max-width: 520px) { .os-disc { width: 50px; height: 50px } }
 
+/* ─────────────────── the enchanted ink ───────────────────
+   every letter conjured onto the page (see lib/ink.ts) */
+html.ft .ftl { --gc: 238, 192, 122; position: relative; opacity: 0; display: inline-block; transform: translateY(.45em) rotate(var(--r, 4deg)) scale(.55); }
+html.ft .ftl.ftg { --gc: 242, 169, 180; }
+html.ft :is(.ftv, .vis, .in, .on, .open, .show) .ftl,
+html.tale .hero .ftl { animation: ftInk .7s cubic-bezier(.2, .7, .25, 1.15) forwards; animation-delay: var(--d, 0ms); }
+@keyframes ftInk {
+  0% { opacity: 0; transform: translateY(.45em) rotate(var(--r, 4deg)) scale(.55) }
+  55% { opacity: 1; transform: translateY(-.08em) rotate(calc(var(--r, 4deg) * -.4)) scale(1.12) }
+  100% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1) }
+}
+/* the Cinderella glow: a painted-once ghost of each letter, fading on the compositor */
+html.ft .ftl::after {
+  content: attr(data-c); position: absolute; left: 0; top: 0; opacity: 0; pointer-events: none; color: #fff6dc;
+  text-shadow: 0 0 5px rgba(255, 255, 255, .95), 0 0 16px rgba(var(--gc), 1), 0 0 28px rgba(var(--gc), .55);
+}
+html.ft :is(.ftv, .vis, .in, .on, .open, .show) .ftl::after,
+html.tale .hero .ftl::after { animation: ftFlash .65s cubic-bezier(.3, .6, .3, 1) var(--d, 0ms) both; }
+html.ft .ftl.rich::after { text-shadow: 0 0 6px rgba(255, 255, 255, .98), 0 0 22px rgba(var(--gc), 1), 0 0 42px rgba(var(--gc), .6); }
+html.ft :is(.ftv, .vis, .in, .on, .open, .show) .ftl.rich::after,
+html.tale .hero .ftl.rich::after { animation-duration: .85s; }
+@keyframes ftFlash {
+  0% { opacity: 0; transform: translateY(.3em) scale(.7) }
+  14% { opacity: 1; transform: translateY(-.04em) scale(1.12) }
+  100% { opacity: 0; transform: translateY(-.12em) scale(1.05) }
+}
+/* the quill — a spark that travels the line while the words write themselves */
+#quill {
+  position: fixed; left: 0; top: 0; z-index: 65; pointer-events: none; font-size: 13px; color: var(--color-pearl);
+  opacity: 0; transition: opacity .35s; will-change: transform;
+  text-shadow: 0 0 6px rgba(255, 246, 220, .95), 0 0 16px rgba(238, 192, 122, .9), 0 0 30px rgba(238, 192, 122, .5);
+}
+#quill.on { opacity: 1; }
+
 /* ─────────────────── reduced motion ─────────────────── */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .15s !important; }
