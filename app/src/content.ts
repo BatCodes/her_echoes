@@ -253,12 +253,16 @@ export const GRANTS: string[] = [
   'anything. everything. — <b>granted</b> before you finish typing.',
 ]
 
-/* ── our songs ── */
-export interface Song { title: string; artist: string; yt: string; alt?: string }
+/* ── our songs · self-hosted, no ads, no video, ever ──
+   Drop the audio files into app/public/audio/ with these names
+   (AAC .m4a ≈96-128kbps — the one codec every phone decodes),
+   run the release, done. Until a file exists the player waits
+   gracefully and says so. */
+export interface Song { title: string; artist: string; src: string }
 export const OUR_SONGS: Song[] = [
-  { title: 'Him & I', artist: 'G-Eazy & Halsey', yt: 'SA7AIQw-7Ms', alt: 'NdSJ1pyaAH8' },
-  { title: 'Achchi Lagti Ho', artist: 'Udit Narayan & Kavita Krishnamurthy', yt: 'HJIRktKAahU', alt: 'VSYbtrB79kc' },
-  { title: 'Aarzu', artist: 'Noor, Khan & Madhurxo', yt: 'M5OCLifZK1w', alt: 'LlwHphMhUOo' },
+  { title: 'Him & I', artist: 'G-Eazy & Halsey', src: 'audio/him-and-i.m4a' },
+  { title: 'Achchi Lagti Ho', artist: 'Udit Narayan & Kavita Krishnamurthy', src: 'audio/achchi-lagti-ho.m4a' },
+  { title: 'Aarzu', artist: 'Noor, Khan & Madhurxo', src: 'audio/aarzu.m4a' },
 ]
 export const PLAYER_VOLUME = 35
 
@@ -359,3 +363,78 @@ export const HEADS: Record<string, SectionCopy> = {
 
 export const FOOTNOTE = 'made under our same sky ✦ for the princess only'
 export const MOON_CREDIT = 'moon photograph · Gregory H. Revera · CC BY-SA 3.0'
+
+/* ═══════════════ the journey · v3.1 ═══════════════ */
+
+/** day one — 26.01.2026, the first &ldquo;may I call?&rdquo; */
+export const DAY_ONE = '2026-01-26'
+
+/* ── chapter gates · full-screen thresholds between the acts ── */
+export interface Gate { fl: string; h2: string; p: string; z: number; weather: string }
+export const GATES: Record<string, Gate> = {
+  two: {
+    fl: 'chapter two', h2: 'The Keeping of Stars',
+    p: 'everything you ever said lightly,<br/>I kept heavily. <b>come see the vault.</b>',
+    z: 11.5, weather: '#c3cbe8',
+  },
+  three: {
+    fl: 'chapter three', h2: 'The Telling',
+    p: 'the parts I replay. the parts I never said.<br/><b>told properly, at last.</b>',
+    z: 9.5, weather: '#f2a9b4',
+  },
+  four: {
+    fl: 'chapter four', h2: 'The Vow',
+    p: 'measured, stamped, sealed, delivered —<br/>everything left on this page <b>is yours.</b>',
+    z: 7.5, weather: '#f7e3bf',
+  },
+}
+
+/* ── whisper breaths · the journey inhales between dense chapters ── */
+export const BREATHS: string[] = [
+  'breathe, meri jaan…<br/>the tale is not done with you.',
+  'almost home now.',
+]
+
+/* ── returning-visitor greetings (picked by days away) ── */
+export const GREETINGS = {
+  soon: 'back so soon? the stars never doubted.',
+  aFew: (d: number) => `${d} days. the stars counted every one.`,
+  long: (d: number) => `${d} days. even the comets were asking about you.`,
+  kept: 'the kingdom kept everything exactly where you left it.',
+}
+
+/* ── the epilogue · the census of this night ── */
+export const EPILOGUE = {
+  kicker: 'the census of this night',
+  heading: 'Let the record show',
+  truths: 'truths uncovered',
+  stars: 'stars set free',
+  seals: 'seals broken',
+  day: 'day of forever',
+  twoStars: 'and two stars, side by side, now burn in this sky — <b>permanent</b>. find them on any night.',
+  returnCta: 'return to the beginning',
+  returnNote: 'this story repeats forever',
+}
+
+/* ── one whisper per visit · SEED LINES — REWRITE & EXTEND IN YOUR OWN WORDS.
+   index = visit number; after the list ends it rotates. ── */
+export const WHISPER_INTRO = 'the kingdom has one more thing to tell you — only today&rsquo;s.'
+export const WHISPERS: string[] = [
+  'your <b>&ldquo;Welcome&rdquo;</b> — the very first word you ever sent me — is still the most accurate description of what you became.',
+  'I have re-read the dead-phone night more times than I have ever admitted. <b>every</b> time, 10:52 pm undoes me again.',
+  'the ten seconds between &ldquo;May I call?&rdquo; and your &ldquo;Yes&rdquo; are the longest I have ever lived. <b>worth it.</b>',
+]
+
+/* ── the living almanac lines ── */
+export const SEVEN02 = '7:02 pm. the minute you said <b>Yes</b>.<br/>still the best minute I own.'
+export const LATE_NIGHT = 'it is past midnight in your kingdom.<br/><i>&ldquo;ap jb sulaty ho tu zyda achi nend ati h&rdquo;</i> — so go, guddu.<br/><b>the stars will hold your place.</b>'
+export const MOON_AGREES = 'tonight the sky agrees — chaudhvin ka chand, for real. look up.'
+export const VISIT_STAR_NOTE = (n: number) =>
+  `the sky gains a star every time you come home to it — yours now number ${n}.`
+export const MONTHLY_26 = 'day one was a 26th too. the sky remembers.'
+export const OCCASIONS: Record<string, string> = {
+  dayone: 'today, some years ago, a stranger typed &ldquo;May I call?&rdquo; — happy day one, meri jaan.',
+  iloveyou: 'on this day, at 9:31 am, the words refused to stay inside one more day.',
+  ring: 'on this day, a small gold circle made the whole future official.',
+  birthday: '&ldquo;my life&rsquo;s been better since you&rdquo; — arrived first, on this day, into my birthday.',
+}

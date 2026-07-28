@@ -1,10 +1,22 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { LETTER, FINALE_BG } from '../content'
 import { gsap } from '../lib/gsapSetup'
 import { reduced } from '../lib/prefs'
 import { goldDust } from '../lib/fx'
 import { inkScan } from '../lib/ink'
 import { scrollToEl } from '../lib/scroll'
+import { thump, duck, unduck } from '../lib/audio'
+import { confirm as confirmBuzz } from '../lib/haptics'
+import { skyState, exhaleAt } from '../lib/skyState'
+import { keepsake, patch } from '../lib/keepsake'
+
+/* the press-and-hold is TIME-TRUE: dt-based, so it takes the same
+   1.4 seconds on a 60Hz phone and a 120Hz one. While she holds,
+   a heartbeat quickens under her thumb and the cosmic dust gathers
+   toward it — the whole night holding its breath with her. */
+const HOLD_MS = 1400
+const HOLD_MS_REDUCED = 260
+const DECAY_PER_MS = 0.0024
 
 export default function Finale() {
   const heart = useRef<HTMLButtonElement>(null)
@@ -16,7 +28,15 @@ export default function Finale() {
   const raf = useRef(0)
   const foldRaf = useRef(0)
   const holding = useRef(false)
+  const lastT = useRef(0)
+  const lastThump = useRef(0)
   const calls = useRef<gsap.core.Tween[]>([])
+
+  /* the illuminated versal — the letter opens like a manuscript */
+  const [versal, restP1] = useMemo(() => {
+    const m = LETTER.p1.match(/^[A-Za-z]/)
+    return m ? [m[0], LETTER.p1.slice(1)] : ['', LETTER.p1]
+  }, [])
 
   // schedule + remember, so unmount can take it all back
   const later = (t: number, fn: () => void) => {
@@ -30,11 +50,20 @@ export default function Finale() {
     c.setAttribute('height', String(33 * p))
   }
 
+  const heartCenter = () => {
+    const r = heart.current?.getBoundingClientRect()
+    return r ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : { x: innerWidth / 2, y: innerHeight / 2 }
+  }
+
   const reveal = () => {
     setDone(true)
+    patch({ letterRead: true })
+    duck() /* the music steps outside — this room is for her eyes only */
+    const c = heartCenter()
+    exhaleAt(c.x, c.y) /* the night lets its held breath go */
     later(0.42, () => { if (letter.current) scrollToEl(letter.current, -40) })
     const el = letter.current
-    if (!el || reduced) return
+    if (!el || reduced) { later(5, unduck); return }
     // act one — the paper folds flat, then remembers how to open
     foldRaf.current = requestAnimationFrame(() => {
       el.classList.add('pre')
@@ -58,29 +87,63 @@ export default function Finale() {
       goldDust(cx, r.top, 18)
       later(0.35, () => goldDust(cx, r.top, 12))
     })
+    later(end / 1000 + 4, unduck)
   }
 
-  const step = () => {
-    prog.current = Math.min(1, prog.current + (reduced ? 0.06 : 0.014))
+  const step = (now: number) => {
+    const dt = Math.min(50, now - lastT.current)
+    lastT.current = now
+    prog.current = Math.min(1, prog.current + dt / (reduced ? HOLD_MS_REDUCED : HOLD_MS))
     setFill(prog.current)
-    if (prog.current >= 1) { holding.current = false; reveal(); return }
+
+    /* the heartbeat — slow at first, racing just before the letter */
+    if (!reduced) {
+      const interval = 900 - 520 * prog.current
+      if (now - lastThump.current > interval) {
+        lastThump.current = now
+        thump(0.06 + prog.current * 0.16)
+        confirmBuzz()
+        const h = heart.current
+        if (h) { h.classList.remove('pulse'); void h.offsetWidth; h.classList.add('pulse') }
+      }
+    }
+
+    if (prog.current >= 1) {
+      holding.current = false
+      skyState.inhale.on = false
+      reveal()
+      return
+    }
     raf.current = requestAnimationFrame(step)
   }
-  const decay = () => {
-    prog.current = Math.max(0, prog.current - 0.04)
+
+  const decay = (now: number) => {
+    const dt = Math.min(50, now - lastT.current)
+    lastT.current = now
+    prog.current = Math.max(0, prog.current - dt * DECAY_PER_MS)
     setFill(prog.current)
     if (prog.current > 0 && !holding.current) raf.current = requestAnimationFrame(decay)
   }
+
   const press = (e: React.PointerEvent | React.KeyboardEvent) => {
     if (done) return
     e.preventDefault()
     holding.current = true
+    /* the dust begins to gather toward her thumb */
+    const c = heartCenter()
+    skyState.inhale.x = c.x
+    skyState.inhale.y = c.y
+    skyState.inhale.on = true
+    lastT.current = performance.now()
+    lastThump.current = 0
     cancelAnimationFrame(raf.current)
     raf.current = requestAnimationFrame(step)
   }
   const release = () => {
     if (done || !holding.current) return
     holding.current = false
+    skyState.inhale.on = false
+    lastT.current = performance.now()
     cancelAnimationFrame(raf.current)
     raf.current = requestAnimationFrame(decay)
   }
@@ -92,6 +155,7 @@ export default function Finale() {
       removeEventListener('pointerup', release)
       removeEventListener('pointercancel', release)
       cancelAnimationFrame(raf.current)
+      skyState.inhale.on = false
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done])
@@ -104,6 +168,8 @@ export default function Finale() {
       calls.current.length = 0
     }
   }, [])
+
+  const returning = keepsake().letterRead && !done
 
   return (
     <section className={'finale' + (broken ? ' noimg' : '')} id="finale">
@@ -136,11 +202,16 @@ export default function Finale() {
         </svg>
       </button>
       <div className="holdhint" aria-live="polite">
-        {done ? '♥ a letter, for your eyes only' : "press & hold — don't let go"}
+        {done ? '♥ a letter, for your eyes only'
+          : returning ? "press & hold — it remembers you read it. it wants to be read again."
+          : "press & hold — don't let go"}
       </div>
       <div ref={letter} className={'letter' + (done ? ' show' : '')}>
         <div className="to">{LETTER.to}</div>
-        <p dangerouslySetInnerHTML={{ __html: LETTER.p1 }} />
+        <p>
+          {versal && <span className="versal">{versal}</span>}
+          <span dangerouslySetInnerHTML={{ __html: restP1 }} />
+        </p>
         <p dangerouslySetInnerHTML={{ __html: LETTER.p2 }} />
         <p dangerouslySetInnerHTML={{ __html: LETTER.p3 }} />
         <div className="sig">{LETTER.sig}</div>

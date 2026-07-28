@@ -1,8 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
 import { MEMORIES, HEADS } from '../content'
 import SectionHead from './SectionHead'
-import { reduced, tier, vibrate } from '../lib/prefs'
+import { reduced, tier } from '../lib/prefs'
 import { goldDust } from '../lib/fx'
+import { soft } from '../lib/haptics'
+import { chime } from '../lib/audio'
+import { wishStar } from '../lib/skyState'
+import { keepsake, patch } from '../lib/keepsake'
+import { startScroll, stopScroll } from '../lib/scroll'
+import { ScrollTrigger } from '../lib/gsapSetup'
+
+/* random music-box notes for freed stars — never the same twice in a row */
+const JAR_PENTA = [0, 3, 5, 7, 10]
 
 type MatterNS = typeof import('matter-js')
 
@@ -117,7 +126,8 @@ export default function StarJar() {
           v.el.style.transform =
             `translate3d(${(b.position.x - v.r).toFixed(1)}px, ${(b.position.y - v.r).toFixed(1)}px, 0) rotate(${(b.angle * 57.3).toFixed(1)}deg)`
         }
-        /* the freed star clears the mouth — dissolve it into dust */
+        /* the freed star clears the mouth — dissolve it into dust,
+           and let the memory it carried join the sky for good */
         if (state.freeIdx >= 0 && !state.freeFaded) {
           const fb = bodies[state.freeIdx]
           if (fb.position.y < 30) {
@@ -125,6 +135,7 @@ export default function StarJar() {
             visuals[state.freeIdx].el.style.opacity = '0'
             const r = el.getBoundingClientRect()
             goldDust(r.left + fb.position.x, r.top + fb.position.y, 9, 60)
+            wishStar(r.left + fb.position.x, r.top + fb.position.y)
           }
         }
         state.raf = requestAnimationFrame(loop)
@@ -156,6 +167,21 @@ export default function StarJar() {
       }
       addEventListener('devicemotion', onMotion)
       state.onMotion = onMotion
+
+      /* the jar introduces itself — one small hop against the glass */
+      ScrollTrigger.create({
+        trigger: el, start: 'top 70%', once: true,
+        onEnter: () => {
+          setTimeout(() => {
+            const s = physics.current
+            if (!s || !s.running) return
+            const b = s.bodies[Math.floor(s.bodies.length / 2)]
+            s.M.Body.applyForce(b, b.position, { x: 0.0012, y: -0.006 })
+            el.classList.add('jiggle')
+            setTimeout(() => el.classList.remove('jiggle'), 1100)
+          }, 600)
+        },
+      })
     })
 
     return () => {
@@ -181,48 +207,34 @@ export default function StarJar() {
     } catch { /* fine */ }
   }
 
-  const pull = () => {
-    if (busy.current) return
-    busy.current = true
-    askMotionPermission()
-    vibrate(6)
-
+  /* set one specific star free — up, out, through nothing at all */
+  const freeStar = (idx: number, vx: number, vy: number) => {
     const p = physics.current
-    if (p) {
-      if (p.freeIdx < 0) {
-        /* release the topmost star — up, out, through nothing at all */
-        let idx = 0
-        for (let i = 1; i < p.bodies.length; i++) {
-          if (p.bodies[i].position.y < p.bodies[idx].position.y) idx = i
-        }
-        const top = p.bodies[idx]
-        const savedFilter = top.collisionFilter
-        p.freeIdx = idx
-        p.freeFaded = false
-        p.visuals[idx].el.classList.add('free')
-        top.collisionFilter = { group: -1, category: 0, mask: 0 }
-        p.M.Body.setVelocity(top, { x: (Math.random() - 0.5) * 2.5, y: -13 })
-        p.M.Body.setAngularVelocity(top, (Math.random() - 0.5) * 0.3)
-        /* the jar never runs dry — home the star while no one is looking */
-        p.freeTimer = window.setTimeout(() => {
-          const q = physics.current
-          if (!q) return
-          q.visuals[idx].el.style.opacity = ''
-          q.visuals[idx].el.classList.remove('free')
-          top.collisionFilter = savedFilter
-          q.M.Body.setPosition(top, { x: 75 + Math.random() * 70, y: 120 })
-          q.M.Body.setVelocity(top, { x: 0, y: 0 })
-          q.M.Body.setAngularVelocity(top, 0)
-          q.freeIdx = -1
-        }, 900)
-      }
-    } else if (flyer.current) {
-      const f = flyer.current
-      f.classList.remove('go'); void f.offsetWidth; f.classList.add('go')
-      const r = stage.current?.getBoundingClientRect()
-      if (r) goldDust(r.left + r.width / 2, r.top + 30, 8, 50)
-    }
+    if (!p || p.freeIdx >= 0) return
+    const top = p.bodies[idx]
+    const savedFilter = top.collisionFilter
+    p.freeIdx = idx
+    p.freeFaded = false
+    p.visuals[idx].el.classList.add('free')
+    top.collisionFilter = { group: -1, category: 0, mask: 0 }
+    p.M.Body.setVelocity(top, { x: vx, y: vy })
+    p.M.Body.setAngularVelocity(top, (Math.random() - 0.5) * 0.3)
+    /* the jar never runs dry — home the star while no one is looking */
+    p.freeTimer = window.setTimeout(() => {
+      const q = physics.current
+      if (!q) return
+      q.visuals[idx].el.style.opacity = ''
+      q.visuals[idx].el.classList.remove('free')
+      top.collisionFilter = savedFilter
+      q.M.Body.setPosition(top, { x: 75 + Math.random() * 70, y: 120 })
+      q.M.Body.setVelocity(top, { x: 0, y: 0 })
+      q.M.Body.setAngularVelocity(top, 0)
+      q.freeIdx = -1
+    }, 900)
+  }
 
+  const revealMemory = () => {
+    patch({ freedStars: keepsake().freedStars + 1 })
     setShow(false)
     setTimeout(() => {
       oi.current++
@@ -236,6 +248,113 @@ export default function StarJar() {
     }, reduced ? 50 : 820)
   }
 
+  const pull = () => {
+    if (busy.current) return
+    busy.current = true
+    askMotionPermission()
+    soft()
+    chime(JAR_PENTA[Math.floor(Math.random() * JAR_PENTA.length)], 0.07)
+
+    const p = physics.current
+    if (p) {
+      if (p.freeIdx < 0) {
+        /* the topmost star answers a plain tap */
+        let idx = 0
+        for (let i = 1; i < p.bodies.length; i++) {
+          if (p.bodies[i].position.y < p.bodies[idx].position.y) idx = i
+        }
+        freeStar(idx, (Math.random() - 0.5) * 2.5, -13)
+      }
+    } else if (flyer.current) {
+      const f = flyer.current
+      f.classList.remove('go'); void f.offsetWidth; f.classList.add('go')
+      const r = stage.current?.getBoundingClientRect()
+      if (r) {
+        goldDust(r.left + r.width / 2, r.top + 30, 8, 50)
+        wishStar(r.left + r.width / 2, r.top + 24)
+      }
+    }
+    revealMemory()
+  }
+
+  /* ── pluck a star: press the glass, drag it up out of the mouth ── */
+  const drag = useRef<{
+    cons: import('matter-js').Constraint | null
+    idx: number
+    pts: { x: number; y: number; t: number }[]
+  }>({ cons: null, idx: -1, pts: [] })
+  const skipTap = useRef(false)
+
+  const stagePoint = (e: React.PointerEvent) => {
+    const r = stage.current!.getBoundingClientRect()
+    return {
+      x: (e.clientX - r.left) * (STAGE_W / r.width),
+      y: (e.clientY - r.top) * (STAGE_H / r.height),
+    }
+  }
+
+  const onDown = (e: React.PointerEvent) => {
+    const p = physics.current
+    if (!p || p.freeIdx >= 0 || busy.current) return
+    const pt = stagePoint(e)
+    let best = -1, bd = 1e9
+    for (let i = 0; i < p.bodies.length; i++) {
+      const d = Math.hypot(p.bodies[i].position.x - pt.x, p.bodies[i].position.y - pt.y)
+      if (d < bd) { bd = d; best = i }
+    }
+    if (best < 0 || bd > 32) return
+    const cons = p.M.Constraint.create({
+      pointA: pt, bodyB: p.bodies[best], pointB: { x: 0, y: 0 },
+      stiffness: 0.09, damping: 0.05, length: 0,
+    })
+    p.M.Composite.add(p.engine.world, cons)
+    drag.current = { cons, idx: best, pts: [{ ...pt, t: performance.now() }] }
+    ;(e.currentTarget as HTMLElement).setPointerCapture(e.pointerId)
+    stopScroll()
+  }
+
+  const onMove = (e: React.PointerEvent) => {
+    const d = drag.current
+    if (!d.cons) return
+    const pt = stagePoint(e)
+    d.cons.pointA.x = pt.x
+    d.cons.pointA.y = pt.y
+    d.pts.push({ ...pt, t: performance.now() })
+    if (d.pts.length > 6) d.pts.shift()
+  }
+
+  const onUp = () => {
+    const d = drag.current
+    const p = physics.current
+    if (!d.cons || !p) return
+    p.M.Composite.remove(p.engine.world, d.cons)
+    startScroll()
+    const first = d.pts[0]
+    const last = d.pts[d.pts.length - 1]
+    const moved = Math.hypot(last.x - first.x, last.y - first.y)
+    const dt = Math.max(1, last.t - first.t)
+    const vy = ((last.y - first.y) / dt) * 1000 /* stage px per second */
+    const vx = ((last.x - first.x) / dt) * 1000
+    const body = p.bodies[d.idx]
+    /* a real upward fling above the shoulders sets the star free */
+    if (!busy.current && (vy < -540 || (body.position.y < 74 && vy < -120))) {
+      busy.current = true
+      soft()
+      chime(JAR_PENTA[Math.floor(Math.random() * JAR_PENTA.length)], 0.07)
+      freeStar(d.idx, Math.max(-4, Math.min(4, vx * 0.012)), Math.min(-9, vy * 0.016))
+      revealMemory()
+      skipTap.current = true
+    } else if (moved > 10) {
+      skipTap.current = true /* a lazy sideways drop is not a pull */
+    }
+    drag.current = { cons: null, idx: -1, pts: [] }
+  }
+
+  const tap = () => {
+    if (skipTap.current) { skipTap.current = false; return }
+    pull()
+  }
+
   const m = memIdx !== null ? MEMORIES[memIdx] : null
 
   return (
@@ -243,14 +362,18 @@ export default function StarJar() {
       <SectionHead copy={HEADS.jar} />
       <div
         ref={stage} className="jarstage" role="button" tabIndex={0}
-        aria-label="Tap the jar of memories"
-        onClick={pull}
+        aria-label="Tap the jar of memories, or pluck a star out of it"
+        onClick={tap}
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={onUp}
+        onPointerCancel={onUp}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pull() } }}
       >
         <JarGlass />
         <span ref={flyer} className="jarflyer" style={{ left: '46%', top: '38%' }} aria-hidden="true">✦</span>
       </div>
-      <div className="hintl">tap the jar{tier === 'full' ? ' · or shake your phone' : ''}</div>
+      <div className="hintl">tap the jar{tier === 'full' ? ' · pluck a star out · or shake your phone' : ''}</div>
       <div className={'mem' + (show ? ' show' : '')} aria-live="polite">
         {m && (
           <>

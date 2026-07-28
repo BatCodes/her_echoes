@@ -1,20 +1,44 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CONFESSIONS, HEADS } from '../content'
 import SectionHead from './SectionHead'
 import { sparkleAt, goldDust } from '../lib/fx'
-import { vibrate } from '../lib/prefs'
+import { seal } from '../lib/haptics'
+import { crack } from '../lib/audio'
+import { keepsake, markIndex } from '../lib/keepsake'
+import { ScrollTrigger } from '../lib/gsapSetup'
+import { reduced } from '../lib/prefs'
 
 export default function Confessions() {
-  const [open, setOpen] = useState<Set<number>>(new Set())
+  /* a confession cannot be unsaid — opened stays opened, across visits */
+  const [open, setOpen] = useState<Set<number>>(() =>
+    new Set(keepsake().confessions.filter((i) => i >= 0 && i < CONFESSIONS.length)))
+  const grid = useRef<HTMLDivElement>(null)
+
+  /* the first sealed envelope introduces itself: one small breath of the flap */
+  useEffect(() => {
+    const el = grid.current
+    if (!el || reduced) return
+    const st = ScrollTrigger.create({
+      trigger: el, start: 'top 72%', once: true,
+      onEnter: () => {
+        const first = el.querySelector('.env:not(.open)')
+        if (!first) return
+        first.classList.add('peek')
+        setTimeout(() => first.classList.remove('peek'), 1900)
+      },
+    })
+    return () => st.kill()
+  }, [])
 
   const openEnv = (i: number, e: React.MouseEvent) => {
-    // a confession cannot be unsaid — opened stays opened
     if (open.has(i)) return
     const ns = new Set(open); ns.add(i)
     setOpen(ns)
+    markIndex('confessions', i)
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
     sparkleAt(r)
-    vibrate(6)
+    seal(e.currentTarget as HTMLElement)
+    crack(0.09) /* the wax gives way, audibly */
     // a few motes lift off the flap's edge
     goldDust(r.left + r.width / 2, r.top, 6, 60)
   }
@@ -22,7 +46,7 @@ export default function Confessions() {
   return (
     <section>
       <SectionHead copy={HEADS.confessions} />
-      <div className="envgrid">
+      <div className="envgrid" ref={grid}>
         {CONFESSIONS.map((c, i) => (
           <button
             key={i}

@@ -4,6 +4,9 @@ import SectionHead from './SectionHead'
 import { gsap } from '../lib/gsapSetup'
 import { reduced, vibrate } from '../lib/prefs'
 import { goldDust } from '../lib/fx'
+import { fanfare } from '../lib/haptics'
+import { crack } from '../lib/audio'
+import { exhaleAt } from '../lib/skyState'
 import { EASE, DUR } from '../lib/motion'
 
 export default function LoveMeter() {
@@ -48,11 +51,13 @@ export default function LoveMeter() {
     const slam = () => {
       /* the needle blows through the end of the dial — the whole room flinches */
       glow.current?.classList.add('on')
-      vibrate([40, 70, 40])
+      fanfare()
+      crack(0.18)
       const g = gauge.current
       if (g) {
         const r = g.getBoundingClientRect()
         goldDust(r.left + r.width / 2, r.top + r.height / 2)
+        exhaleAt(r.left + r.width / 2, r.top + r.height / 2) /* the night itself gasps */
       }
       setPhase('broken')
       /* let the css fade breathe out on its own */

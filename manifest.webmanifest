@@ -1,0 +1,15 @@
+{
+  "name": "her echoes",
+  "short_name": "her echoes",
+  "description": "a little kingdom — handmade under one sky, for the princess only.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#14102c",
+  "theme_color": "#14102c",
+  "icons": [
+    { "src": "./apple-touch-icon.png", "sizes": "180x180", "type": "image/png", "purpose": "any" },
+    { "src": "./favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

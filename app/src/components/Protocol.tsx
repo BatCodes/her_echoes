@@ -2,7 +2,9 @@ import { useRef, useState } from 'react'
 import { GRANTS, HEADS } from '../content'
 import SectionHead from './SectionHead'
 import { burst, sparkleAt } from '../lib/fx'
-import { vibrate } from '../lib/prefs'
+import { confirm as confirmBuzz } from '../lib/haptics'
+import { thunk } from '../lib/audio'
+import { exhaleAt } from '../lib/skyState'
 
 export default function Protocol() {
   const [gi, setGi] = useState(-1)
@@ -17,9 +19,12 @@ export default function Protocol() {
     setGi(next)
     const count = gn + 1
     setGn(count)
-    vibrate(10)
+    confirmBuzz(btn.current)
+    thunk(0.13) /* the stamp lands with a padded thud */
     const st = stamp.current
     if (st) { st.classList.remove('go'); void st.offsetWidth; st.classList.add('go') }
+    const r = btn.current?.getBoundingClientRect()
+    if (r && count === GRANTS.length) exhaleAt(r.left + r.width / 2, r.top + r.height / 2)
     setDim(true)
     setTimeout(() => { setLine(GRANTS[next]); setDim(false) }, 220)
     sparkleAt(btn.current?.getBoundingClientRect())

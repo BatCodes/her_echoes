@@ -2,21 +2,31 @@ import { useEffect, useRef, useState } from 'react'
 import { DECREE, HEADS } from '../content'
 import SectionHead from './SectionHead'
 import { ScrollTrigger } from '../lib/gsapSetup'
-import { vibrate } from '../lib/prefs'
+import { seal as sealBuzz, tick } from '../lib/haptics'
 import { goldDust, goldDebris } from '../lib/fx'
+import { keepsake, patch } from '../lib/keepsake'
+import { herClock } from '../lib/almanac'
+import { waxRasp, waxQuiet, crack } from '../lib/audio'
+import { exhaleAt } from '../lib/skyState'
 
-/* The decree hides under painted wax. She rubs it away with her thumb. */
+/* The decree hides under painted wax. She rubs it away with her thumb.
+   The wax is embossed and stippled like the real thing, it rasps under
+   speed, a crack races across it near the end — and once broken it
+   STAYS broken, across every future visit. */
 export default function Seal() {
   const decree = useRef<HTMLDivElement>(null)
   const canvas = useRef<HTMLCanvasElement>(null)
-  const [cleared, setCleared] = useState(false)
+  const [cleared, setCleared] = useState(() => !!keepsake().sealBroken)
   const [fading, setFading] = useState(false)
   const painted = useRef(false)
   const rubbing = useRef(false)
   const lastFleck = useRef(0)
   const lastBuzz = useRef(0)
+  const lastPt = useRef({ x: 0, y: 0, t: 0 })
+  const brokenOn = keepsake().sealBroken
 
   useEffect(() => {
+    if (cleared) return
     const el = decree.current
     if (!el) return
 
@@ -35,9 +45,21 @@ export default function Seal() {
       grd.addColorStop(0, '#2E2560'); grd.addColorStop(1, '#221B44')
       ctx.fillStyle = grd
       ctx.fillRect(0, 0, r.width, r.height)
+      /* wax with a soul: stippled grain across the slab */
+      ctx.fillStyle = 'rgba(255,255,255,0.025)'
+      for (let i = 0; i < 260; i++) {
+        ctx.fillRect(Math.random() * r.width, Math.random() * r.height, 1.2, 1.2)
+      }
       const cx = r.width / 2, cy = r.height / 2
+      /* the medallion — embossed, lit from the upper left */
       ctx.beginPath(); ctx.arc(cx, cy, 46, 0, 7); ctx.fillStyle = '#EEC07A'; ctx.fill()
+      const hi = ctx.createRadialGradient(cx - 16, cy - 18, 4, cx, cy, 52)
+      hi.addColorStop(0, 'rgba(255,246,224,.55)')
+      hi.addColorStop(0.5, 'rgba(255,246,224,0)')
+      hi.addColorStop(1, 'rgba(90,53,80,.25)')
+      ctx.beginPath(); ctx.arc(cx, cy, 46, 0, 7); ctx.fillStyle = hi; ctx.fill()
       ctx.beginPath(); ctx.arc(cx, cy, 38, 0, 7); ctx.strokeStyle = '#B98B4E'; ctx.lineWidth = 2; ctx.stroke()
+      ctx.beginPath(); ctx.arc(cx, cy, 44, 0, 7); ctx.strokeStyle = 'rgba(138,90,43,.5)'; ctx.lineWidth = 1; ctx.stroke()
       ctx.fillStyle = '#8A5A2B'
       ctx.font = 'italic 600 26px "Cormorant Garamond", Georgia, serif'
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
@@ -52,7 +74,40 @@ export default function Seal() {
       onEnter: () => { document.fonts.ready.then(paint).catch(paint) },
     })
     return () => st.kill()
-  }, [])
+  }, [cleared])
+
+  const breakOpen = (ctx: CanvasRenderingContext2D, w: number, h: number, fx: number, fy: number) => {
+    /* the crack races from her thumb to the nearest edge, then the wax gives */
+    ctx.save()
+    ctx.globalCompositeOperation = 'destination-out'
+    ctx.lineWidth = 14
+    ctx.lineCap = 'round'
+    const toRight = fx > w / 2
+    const endX = toRight ? w + 20 : -20
+    ctx.beginPath()
+    ctx.moveTo(fx, fy)
+    const segs = 7
+    for (let i = 1; i <= segs; i++) {
+      const t = i / segs
+      ctx.lineTo(fx + (endX - fx) * t, fy + (Math.random() - 0.5) * 46)
+    }
+    ctx.stroke()
+    ctx.restore()
+    setCleared(true)
+    setFading(true)
+    waxQuiet()
+    crack(0.16)
+    sealBuzz()
+    const c = herClock()
+    patch({ sealBroken: `${String(c.d).padStart(2, '0')}.${String(c.m).padStart(2, '0')}.${c.y}` })
+    const r = canvas.current!.getBoundingClientRect()
+    const mx = r.left + r.width / 2
+    const my = r.top + r.height / 2
+    goldDust(mx, my, 22, 180)
+    goldDust(mx, my - 70, 10)
+    exhaleAt(mx, my)
+    setTimeout(() => setFading(false), 900)
+  }
 
   const scratch = (e: PointerEvent | React.PointerEvent) => {
     const c = canvas.current
@@ -67,42 +122,41 @@ export default function Seal() {
     ctx.scale(dpr, dpr)
     ctx.globalCompositeOperation = 'destination-out'
     ctx.beginPath(); ctx.arc(x, y, 26, 0, 7); ctx.fill()
-    ctx.restore()
 
-    /* wax crumbs fall off as she rubs · a small hum under her thumb */
+    /* velvet scratch — the material answers her speed */
     const now = performance.now()
-    if (now - lastFleck.current > 45) {
-      lastFleck.current = now
-      goldDebris(e.clientX, e.clientY, 3)
+    const lp = lastPt.current
+    const dt = now - lp.t
+    if (dt > 0 && dt < 200) {
+      const speed = Math.min(1, Math.hypot(x - lp.x, y - lp.y) / dt / 1.4)
+      waxRasp(speed)
+      if (now - lastFleck.current > Math.max(28, 70 - speed * 45)) {
+        lastFleck.current = now
+        goldDebris(e.clientX, e.clientY, 2 + Math.round(speed * 4))
+      }
+      if (now - lastBuzz.current > Math.max(90, 200 - speed * 110)) {
+        lastBuzz.current = now
+        tick()
+      }
     }
-    if (now - lastBuzz.current > 180) {
-      lastBuzz.current = now
-      vibrate(3)
-    }
+    lastPt.current = { x, y, t: now }
 
     if (Math.random() < 0.12) {
       const d = ctx.getImageData(0, 0, c.width, c.height).data
       let empty = 0
       const step = 4 * 97
       for (let i = 3; i < d.length; i += step) if (d[i] === 0) empty++
-      if (empty / (d.length / step) > 0.5) {
-        setCleared(true)
-        setFading(true)
-        vibrate([14, 30, 14])
-        /* the wax exhales as it breaks */
-        const mx = r.left + r.width / 2
-        const my = r.top + r.height / 2
-        goldDust(mx, my, 22, 180)
-        goldDust(mx, my - 70, 10)
-        setTimeout(() => setFading(false), 900)
-      }
+      /* at ~40% cleared the wax fails all at once — a crack, then daylight */
+      if (empty / (d.length / step) > 0.4) breakOpen(ctx, r.width, r.height, x, y)
     }
+    ctx.restore()
   }
 
   useEffect(() => {
     const move = (e: PointerEvent) => { if (rubbing.current) scratch(e) }
     const up = () => {
       rubbing.current = false
+      waxQuiet()
       if (canvas.current) canvas.current.style.cursor = ''
     }
     addEventListener('pointermove', move)
@@ -133,6 +187,7 @@ export default function Seal() {
             style={fading ? { transition: 'opacity .8s', opacity: 0 } : undefined}
             onPointerDown={(e) => {
               rubbing.current = true
+              lastPt.current = { x: 0, y: 0, t: 0 }
               e.currentTarget.style.cursor = 'grabbing'
               scratch(e)
             }}
@@ -141,7 +196,9 @@ export default function Seal() {
         )}
       </div>
       <div className="sealhint">
-        {cleared ? 'seal broken · decree in effect ♥' : 'rub the golden seal to break it'}
+        {cleared
+          ? (brokenOn ? `seal broken · unsealed by Her Highness on ${brokenOn} ♥` : 'seal broken · decree in effect ♥')
+          : 'rub the golden seal to break it'}
       </div>
     </section>
   )

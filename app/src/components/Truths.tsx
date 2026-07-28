@@ -1,11 +1,20 @@
 import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { TRUTHS, HEADS, type IconName } from '../content'
+import { TRUTHS, HEADS, MOON_AGREES, type IconName } from '../content'
 import SectionHead from './SectionHead'
 import { gsap, ScrollTrigger } from '../lib/gsapSetup'
-import { reduced, vibrate } from '../lib/prefs'
+import { reduced } from '../lib/prefs'
 import { burst } from '../lib/fx'
 import { scrollToEl, startScroll, stopScroll } from '../lib/scroll'
+import { keepsake, markIndex } from '../lib/keepsake'
+import { chime, duck, unduck } from '../lib/audio'
+import { soft, fanfare } from '../lib/haptics'
+import { exhaleAt, meteorShower } from '../lib/skyState'
+import { isFullMoon } from '../lib/moon'
+
+/* eight truths, eight ascending notes — by the last card she has
+   unknowingly played a small complete melody */
+const PENTA = [0, 2, 4, 7, 9, 12, 14, 16]
 
 /* the original's hand-drawn stroke icons, kept exactly */
 const ICONS: Record<IconName, string> = {
@@ -137,8 +146,10 @@ function Tile({ i, seen, onOpen }: { i: number; seen: boolean; onOpen: (i: numbe
 export default function Truths() {
   const [open, setOpen] = useState<number | null>(null)
   const [stage, setStage] = useState<'surface' | 'evidence'>('surface')
-  const [seen, setSeen] = useState<Set<number>>(new Set())
+  /* the constellation stays lit between visits — the kingdom remembers */
+  const [seen, setSeen] = useState<Set<number>>(() => new Set(keepsake().truths.filter((i) => i >= 0 && i < N)))
   const [toast, setToast] = useState(false)
+  const fullMoon = useState(isFullMoon)[0]
   const lastFocus = useRef<HTMLElement | null>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const complete = seen.size === N
@@ -148,10 +159,12 @@ export default function Truths() {
     setStage('surface')
     setOpen(i)
     stopScroll()
+    duck() /* the music steps behind a closed door while she reads */
   }
   const close = () => {
     setOpen(null)
     startScroll()
+    unduck()
     lastFocus.current?.focus?.()
   }
   const next = () => {
@@ -167,11 +180,17 @@ export default function Truths() {
     if (open === null || seen.has(open)) return
     const ns = new Set(seen); ns.add(open)
     setSeen(ns)
-    vibrate(8)
+    markIndex('truths', open)
+    soft()
+    chime(PENTA[Math.min(ns.size - 1, PENTA.length - 1)])
     if (ns.size === N) {
       setTimeout(() => {
         setToast(true)
         burst(26)
+        fanfare()
+        meteorShower() /* the sky applauds the coronation */
+        const box = document.querySelector('.constbox')?.getBoundingClientRect()
+        if (box) exhaleAt(box.left + box.width / 2, box.top + box.height / 2)
         document.querySelectorAll('[data-gem]').forEach((g) => g.classList.add('on'))
       }, 1800)
     }
@@ -194,10 +213,11 @@ export default function Truths() {
       <Constellation lit={seen} complete={complete} />
       <div className="counter"><b>{seen.size}</b> / {N} truths uncovered</div>
       <div className="counterhint">find the evidence inside each card to light its star</div>
+      {fullMoon && <div className="moonagrees">{MOON_AGREES}</div>}
       <div className={'consttoast' + (toast ? ' show' : '')} aria-live="polite">
         👑 Coronation complete — as if it was ever in doubt.<br />Long live the Princess.
       </div>
-      <div className="grid2">
+      <div className={'grid2' + (fullMoon ? ' fullmoon' : '')}>
         {TRUTHS.map((_, i) => (
           <Tile key={i} i={i} seen={seen.has(i)} onOpen={openCard} />
         ))}
