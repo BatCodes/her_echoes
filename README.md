@@ -66,6 +66,13 @@ favicon.svg, apple-touch-icon.png, 404.html, robots.txt, .nojekyll
 GitHub Pages serves the repo root from `main` — upload/commit `index.html`
 and it's live in a minute.
 
+## The contemporary remake — side by side
+
+The Vite/React/WebGL remake now lives at **[/v2/](https://batcodes.github.io/her_echoes/v2/)**
+— same words, contemporary stack, with the enchanted ink and quill ported in.
+The root stays the beloved single file until the remake clearly wins by eye;
+flipping is one folder swap. Source: the `v2-react` branch.
+
 ## The React experiment
 
 A full Vite/React/WebGL rebuild (v2.1, "the sky finally glows") lives on the
