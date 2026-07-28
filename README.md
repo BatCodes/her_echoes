@@ -1,63 +1,38 @@
 # her echoes ✦ v2
 
-A little kingdom, rebuilt — same words, new sky.
-Vite + React + TypeScript · WebGL starfield (R3F) · Lenis · GSAP · Motion · matter-js.
+A little kingdom — Vite + React + TypeScript · WebGL starfield · Lenis · GSAP · Motion · matter-js.
+Every word she reads lives in one source file (`src/content.ts` in the app source).
 
-## Repo layout
+## This repo = the built site, flat on purpose
 
-```
-/                    ← the BUILT site (what GitHub Pages serves)
-/assets              ← ⚠ the site's JS, CSS and fonts — the page is blank without it
-/app                 ← the source code (edit here)
-/app/src/content.ts  ← every word on the site lives in this one file
-/.github/workflows   ← optional CI deploy (manual trigger)
-```
+There are **no folders** — every file the site needs sits at the root, because
+GitHub's web uploader can't upload folders. To deploy an update:
 
-## Deploying — the folder matters
+1. repo → **Add file → Upload files**
+2. open the site folder on your computer → **select ALL files** (Ctrl/Cmd+A)
+3. drag them into the drop zone → **Commit**
 
-The site is not just `index.html`: **the `assets/` folder must be in the repo**,
-or the page loads empty.
+If the page ever says *“a few pages of the storybook are missing”*, some files
+were skipped — repeat with all of them selected.
 
-**Route A · git (recommended, always complete):**
+## Editing the site
 
-```bash
-git clone https://github.com/BatCodes/her_echoes && cd her_echoes
-git rm -r -q .                       # clear the old contents
-cp -r /path/to/her_echoes_upload/. . # copy EVERYTHING from this folder (incl. dotfiles)
-git add -A && git commit -m "v2 ✦ new sky" && git push
-```
-
-**Route B · web UI:** repo → *Add file → Upload files* → drag the **entire
-contents** of this folder into the drop zone — *including dragging the `assets`
-and `app` folders themselves* (the file picker can't select folders; drag them).
-Commit. `.nojekyll` and `.github/` may be skipped by browsers — harmless for
-Route B, but Route A is the safe path.
-
-Pages stays on *Deploy from branch → main → /(root)* — no settings change.
-
-## Editing the words
-
-Everything she reads is in **`app/src/content.ts`**. Then:
+The source code ships alongside this repo (the `app-source` folder in the
+delivery zip — keep it safe, or push it here with git):
 
 ```bash
-cd app
-npm install        # first time only
-npm run dev        # live preview
-npm run release    # build + sync into the repo root → commit & push
+cd app-source
+npm install     # first time only
+npm run dev     # live preview
+npm run build   # → dist/ = the new flat site files to upload
 ```
-
-Adding a song = one entry in `OUR_SONGS` (YouTube id + optional backup id).
 
 ## Notes
 
-- **Privacy** — `noindex` meta + `robots.txt`.
-- **Tiers** — full WebGL sky + physics on capable devices; calm CSS sky elsewhere;
-  `prefers-reduced-motion` honored throughout.
-- **Music** — YouTube requires one tap before sound; the vinyl hint covers it.
-  The mini-player is visible in the panel; audio keeps playing when it's closed.
-- **Images** — moon/sunset stream from Wikimedia/Unsplash with painted fallbacks.
-  Moon photo credit (CC BY-SA 3.0, Gregory H. Revera) sits in the site footer.
-- If the page ever shows *“a piece of the sky is missing”*, the `assets/` folder
-  didn’t make it up — re-upload it.
+- `noindex` + `robots.txt` keep search engines out.
+- Full WebGL sky + physics on capable phones; calm CSS sky elsewhere;
+  `prefers-reduced-motion` honored.
+- YouTube needs one tap before sound — the vinyl hint covers it.
+- Moon photo credit (CC BY-SA 3.0, Gregory H. Revera) is in the site footer.
 
 made under one sky ✦
