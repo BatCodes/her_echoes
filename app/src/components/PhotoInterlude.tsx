@@ -14,25 +14,38 @@ interface Props {
 }
 
 /* full-bleed photograph with three-speed parallax:
-   image drifts, scrim holds, caption rises */
+   image drifts, scrim holds, caption rises,
+   and a colour grade breathes in at mid-scene */
 export default function PhotoInterlude({ src, srcSet, alt, q, who, aside, variant }: Props) {
   const root = useRef<HTMLDivElement>(null)
   const img = useRef<HTMLImageElement>(null)
   const cap = useRef<HTMLDivElement>(null)
+  const grade = useRef<HTMLDivElement>(null)
   const [broken, setBroken] = useState(false)
   useReveal(cap)
 
   useEffect(() => {
     if (reduced || broken) return
-    const tw = gsap.fromTo(img.current, { yPercent: -7 }, {
-      yPercent: 7, ease: 'none',
-      scrollTrigger: { trigger: root.current, start: 'top bottom', end: 'bottom top', scrub: true },
+    const g = grade.current
+    if (!g) return
+    // one scrubbed timeline, three speeds sharing one trigger
+    const tl = gsap.timeline({
+      defaults: { ease: 'none' },
+      scrollTrigger: {
+        trigger: root.current, start: 'top bottom', end: 'bottom top', scrub: true,
+        // grade swells at the heart of the scene, gone at either edge
+        onUpdate: self => {
+          g.style.setProperty('--gr', (Math.sin(Math.PI * self.progress) * 0.7).toFixed(3))
+        },
+      },
     })
-    return () => { tw.scrollTrigger?.kill(); tw.kill() }
+    tl.fromTo(img.current, { yPercent: -9 }, { yPercent: 9 }, 0)
+      .fromTo(cap.current, { yPercent: 26 }, { yPercent: -26 }, 0)
+    return () => { tl.scrollTrigger?.kill(); tl.kill() }
   }, [broken])
 
   return (
-    <div ref={root} className={'photo' + (broken ? ' noimg' : '')}>
+    <div ref={root} className={'photo ' + variant + (broken ? ' noimg' : '')}>
       <div className={'art ' + (variant === 'moon' ? 'moonart' : 'sunart')} aria-hidden="true"><div className="disc" /></div>
       {!broken && (
         <img
@@ -42,6 +55,7 @@ export default function PhotoInterlude({ src, srcSet, alt, q, who, aside, varian
         />
       )}
       <div className="scrim" aria-hidden="true" />
+      <div className="grade" aria-hidden="true" ref={grade} />
       <div ref={cap} className="cap" style={{ visibility: 'hidden' }}>
         <div className="q" dangerouslySetInnerHTML={{ __html: q }} />
         <div className="who">{who}</div>

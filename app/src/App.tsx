@@ -4,6 +4,7 @@ import { gsap, ScrollTrigger } from './lib/gsapSetup'
 import { reduced, tier } from './lib/prefs'
 import { initSmoothScroll } from './lib/scroll'
 import { installTapSparkles } from './lib/fx'
+import { installCursor, installMagnetics } from './lib/interact'
 import { armGyroOnGesture } from './lib/gyro'
 
 import Cover from './components/Cover'
@@ -25,6 +26,7 @@ import Finale from './components/Finale'
 import SongsPlayer from './components/SongsPlayer'
 import Divider from './components/Divider'
 import Grain from './components/Grain'
+import Dust from './components/Dust'
 import SkyLite from './components/SkyLite'
 
 const Sky = lazy(() => import('./components/Sky'))
@@ -40,14 +42,17 @@ export default function App() {
 
   useEffect(() => {
     installTapSparkles()
-    if (tier === 'full') {
+    installMagnetics()
+    installCursor()
+    if (tier !== 'lite') {
       const arm = () => armGyroOnGesture()
       addEventListener('pointerdown', arm, { once: true })
       return () => removeEventListener('pointerdown', arm)
     }
   }, [])
 
-  /* the sky deepens as she reads toward the letter */
+  /* a gentle extra veil for content contrast as the night deepens
+     (the WebGL sky does its own journey — this guards legibility) */
   useEffect(() => {
     if (!opened || reduced) return
     ScrollTrigger.refresh()
@@ -70,10 +75,11 @@ export default function App() {
 
   return (
     <>
-      {tier === 'full'
-        ? <Suspense fallback={<SkyLite />}><Sky /></Suspense>
+      {tier !== 'lite'
+        ? <Suspense fallback={<SkyLite />}><Sky post={tier === 'full'} /></Suspense>
         : <SkyLite />}
       <div ref={deepen} className="deepen" aria-hidden="true" />
+      {tier !== 'lite' && !reduced && <Dust />}
       <Grain />
 
       {!opened && <Cover onOpen={onOpen} />}

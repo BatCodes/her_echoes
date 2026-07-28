@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { LETTER, FINALE_BG } from '../content'
 import { gsap } from '../lib/gsapSetup'
 import { reduced } from '../lib/prefs'
-import { burst } from '../lib/fx'
+import { goldDust } from '../lib/fx'
 import { scrollToEl } from '../lib/scroll'
 
 export default function Finale() {
@@ -13,7 +13,14 @@ export default function Finale() {
   const [broken, setBroken] = useState(false)
   const prog = useRef(0)
   const raf = useRef(0)
+  const foldRaf = useRef(0)
   const holding = useRef(false)
+  const calls = useRef<gsap.core.Tween[]>([])
+
+  // schedule + remember, so unmount can take it all back
+  const later = (t: number, fn: () => void) => {
+    calls.current.push(gsap.delayedCall(t, fn))
+  }
 
   const setFill = (p: number) => {
     const c = clip.current
@@ -24,14 +31,28 @@ export default function Finale() {
 
   const reveal = () => {
     setDone(true)
-    burst(36)
+    later(0.42, () => { if (letter.current) scrollToEl(letter.current, -40) })
     const el = letter.current
-    if (el && !reduced) {
-      const kids = el.querySelectorAll(':scope > *')
-      gsap.fromTo(kids, { autoAlpha: 0, y: 16, filter: 'blur(5px)' },
-        { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: 0.9, stagger: 0.22, ease: 'power2.out', delay: 0.15 })
-    }
-    setTimeout(() => { if (letter.current) scrollToEl(letter.current, -40) }, 420)
+    if (!el || reduced) return
+    // act one — the paper folds flat, then remembers how to open
+    foldRaf.current = requestAnimationFrame(() => {
+      el.classList.add('pre')
+      void el.offsetWidth
+      el.classList.remove('pre')
+      el.classList.add('unfold')
+    })
+    // act two — ink arrives while the paper settles
+    const lines = el.querySelectorAll<HTMLElement>('.inkline')
+    lines.forEach((line, i) => {
+      later(0.75 + i * 0.24, () => line.classList.add('on'))
+    })
+    // act three — one gold exhale from the letterhead, two slow waves
+    later(0.75 + lines.length * 0.24, () => {
+      const r = el.getBoundingClientRect()
+      const cx = r.left + r.width / 2
+      goldDust(cx, r.top, 18)
+      later(0.35, () => goldDust(cx, r.top, 12))
+    })
   }
 
   const step = () => {
@@ -70,6 +91,15 @@ export default function Finale() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [done])
 
+  // unmount only — the [done] effect must not kill mid-flight choreography
+  useEffect(() => {
+    return () => {
+      cancelAnimationFrame(foldRaf.current)
+      calls.current.forEach((c) => c.kill())
+      calls.current.length = 0
+    }
+  }, [])
+
   return (
     <section className={'finale' + (broken ? ' noimg' : '')} id="finale">
       <div className="bgph" aria-hidden="true">
@@ -104,12 +134,12 @@ export default function Finale() {
         {done ? '♥ a letter, for your eyes only' : "press & hold — don't let go"}
       </div>
       <div ref={letter} className={'letter' + (done ? ' show' : '')}>
-        <div className="to">{LETTER.to}</div>
-        <p dangerouslySetInnerHTML={{ __html: LETTER.p1 }} />
-        <p dangerouslySetInnerHTML={{ __html: LETTER.p2 }} />
-        <p dangerouslySetInnerHTML={{ __html: LETTER.p3 }} />
-        <div className="sig">{LETTER.sig}</div>
-        <div className="ps">{LETTER.ps}</div>
+        <div className="to inkline">{LETTER.to}</div>
+        <p className="inkline" dangerouslySetInnerHTML={{ __html: LETTER.p1 }} />
+        <p className="inkline" dangerouslySetInnerHTML={{ __html: LETTER.p2 }} />
+        <p className="inkline" dangerouslySetInnerHTML={{ __html: LETTER.p3 }} />
+        <div className="sig inkline">{LETTER.sig}</div>
+        <div className="ps inkline">{LETTER.ps}</div>
         <svg className="waxstamp" viewBox="0 0 84 84" aria-hidden="true">
           <circle cx="42" cy="42" r="38" fill="#B85C74" />
           <circle cx="42" cy="42" r="38" fill="none" stroke="#8A4A64" strokeWidth="2.5" />

@@ -17,7 +17,19 @@
     <title>Princess Hajra ✦ of earths &amp; skies</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"><!-- pre-hydration skeleton: the night is already here while the storybook loads -->
+      <div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:radial-gradient(130% 95% at 50% 6%,#1e1745 0%,#14102c 55%,#0e0b21 100%)">
+        <div style="text-align:center;font-family:Georgia,serif;font-style:italic;color:#f7e3bf">
+          <svg width="56" height="33" viewBox="0 0 110 64" style="display:block;margin:0 auto 14px;opacity:.9">
+            <path d="M8 52 L14 20 L34 40 L55 8 L76 40 L96 20 L102 52 Z" fill="none" stroke="#EEC07A" stroke-width="2.5" stroke-linejoin="round"/>
+            <rect x="8" y="52" width="94" height="6" rx="3" fill="#EEC07A"/>
+            <circle cx="55" cy="8" r="4" fill="#F2A9B4"/><circle cx="14" cy="20" r="3" fill="#F2A9B4"/><circle cx="96" cy="20" r="3" fill="#F2A9B4"/>
+          </svg>
+          <div style="font-size:15px;letter-spacing:.06em;opacity:.85;animation:ldp 1.8s ease-in-out infinite">once upon a time&hellip;</div>
+        </div>
+        <style>@keyframes ldp{0%,100%{opacity:.45}50%{opacity:.95}}</style>
+      </div>
+    </div>
     <script>
       addEventListener('error', function (e) {
         var t = e.target

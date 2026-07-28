@@ -3,7 +3,7 @@ import { DECREE, HEADS } from '../content'
 import SectionHead from './SectionHead'
 import { ScrollTrigger } from '../lib/gsapSetup'
 import { vibrate } from '../lib/prefs'
-import { burst, sparklePoint } from '../lib/fx'
+import { goldDust, goldDebris } from '../lib/fx'
 
 /* The decree hides under painted wax. She rubs it away with her thumb. */
 export default function Seal() {
@@ -14,6 +14,7 @@ export default function Seal() {
   const painted = useRef(false)
   const rubbing = useRef(false)
   const lastFleck = useRef(0)
+  const lastBuzz = useRef(0)
 
   useEffect(() => {
     const el = decree.current
@@ -41,7 +42,7 @@ export default function Seal() {
       ctx.font = 'italic 600 26px "Cormorant Garamond", Georgia, serif'
       ctx.textAlign = 'center'; ctx.textBaseline = 'middle'
       ctx.fillText('H♥H', cx, cy + 1)
-      ctx.fillStyle = '#C3BCE0'
+      ctx.fillStyle = '#e9ddc8'
       ctx.font = '300 11px Poppins, sans-serif'
       ctx.fillText(DECREE.sealLabel, cx, cy + 72)
     }
@@ -68,11 +69,15 @@ export default function Seal() {
     ctx.beginPath(); ctx.arc(x, y, 26, 0, 7); ctx.fill()
     ctx.restore()
 
-    /* gold flecks fall off the wax as she rubs */
+    /* wax crumbs fall off as she rubs · a small hum under her thumb */
     const now = performance.now()
-    if (now - lastFleck.current > 90) {
+    if (now - lastFleck.current > 45) {
       lastFleck.current = now
-      sparklePoint(e.clientX, e.clientY)
+      goldDebris(e.clientX, e.clientY, 3)
+    }
+    if (now - lastBuzz.current > 180) {
+      lastBuzz.current = now
+      vibrate(3)
     }
 
     if (Math.random() < 0.12) {
@@ -84,7 +89,11 @@ export default function Seal() {
         setCleared(true)
         setFading(true)
         vibrate([14, 30, 14])
-        burst(18)
+        /* the wax exhales as it breaks */
+        const mx = r.left + r.width / 2
+        const my = r.top + r.height / 2
+        goldDust(mx, my, 22, 180)
+        goldDust(mx, my - 70, 10)
         setTimeout(() => setFading(false), 900)
       }
     }
@@ -92,7 +101,10 @@ export default function Seal() {
 
   useEffect(() => {
     const move = (e: PointerEvent) => { if (rubbing.current) scratch(e) }
-    const up = () => { rubbing.current = false }
+    const up = () => {
+      rubbing.current = false
+      if (canvas.current) canvas.current.style.cursor = ''
+    }
     addEventListener('pointermove', move)
     addEventListener('pointerup', up)
     addEventListener('pointercancel', up)
@@ -119,7 +131,11 @@ export default function Seal() {
             ref={canvas}
             className="sealcanvas"
             style={fading ? { transition: 'opacity .8s', opacity: 0 } : undefined}
-            onPointerDown={(e) => { rubbing.current = true; scratch(e) }}
+            onPointerDown={(e) => {
+              rubbing.current = true
+              e.currentTarget.style.cursor = 'grabbing'
+              scratch(e)
+            }}
             aria-label="Rub to break the seal"
           />
         )}

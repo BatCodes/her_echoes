@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { MEMORIES, HEADS } from '../content'
 import SectionHead from './SectionHead'
 import { reduced, tier, vibrate } from '../lib/prefs'
+import { goldDust } from '../lib/fx'
 
 type MatterNS = typeof import('matter-js')
 
@@ -44,6 +45,9 @@ export default function StarJar() {
     visuals: StarVisual[]
     raf: number
     running: boolean
+    freeIdx: number
+    freeFaded: boolean
+    freeTimer: number
     onMotion?: (e: DeviceMotionEvent) => void
   } | null>(null)
 
@@ -87,7 +91,8 @@ export default function StarJar() {
       }
       M.Composite.add(engine.world, [...walls, ...bodies])
 
-      const state: NonNullable<typeof physics.current> = { M, engine, bodies, visuals, raf: 0, running: false }
+      const state: NonNullable<typeof physics.current> =
+        { M, engine, bodies, visuals, raf: 0, running: false, freeIdx: -1, freeFaded: false, freeTimer: 0 }
       physics.current = state
 
       let last = performance.now()
@@ -100,6 +105,16 @@ export default function StarJar() {
           const b = bodies[i], v = visuals[i]
           v.el.style.transform =
             `translate3d(${(b.position.x - v.r).toFixed(1)}px, ${(b.position.y - v.r).toFixed(1)}px, 0) rotate(${(b.angle * 57.3).toFixed(1)}deg)`
+        }
+        /* the freed star clears the mouth — dissolve it into dust */
+        if (state.freeIdx >= 0 && !state.freeFaded) {
+          const fb = bodies[state.freeIdx]
+          if (fb.position.y < 30) {
+            state.freeFaded = true
+            visuals[state.freeIdx].el.style.opacity = '0'
+            const r = el.getBoundingClientRect()
+            goldDust(r.left + fb.position.x, r.top + fb.position.y, 9, 60)
+          }
         }
         state.raf = requestAnimationFrame(loop)
       }
@@ -139,6 +154,7 @@ export default function StarJar() {
       if (p) {
         p.running = false
         cancelAnimationFrame(p.raf)
+        clearTimeout(p.freeTimer)
         if (p.onMotion) removeEventListener('devicemotion', p.onMotion)
         p.visuals.forEach((v) => v.el.remove())
         p.M.Engine.clear(p.engine)
@@ -162,13 +178,38 @@ export default function StarJar() {
 
     const p = physics.current
     if (p) {
-      /* fling the topmost star out of the jar */
-      let top = p.bodies[0]
-      p.bodies.forEach((b) => { if (b.position.y < top.position.y) top = b })
-      p.M.Body.setVelocity(top, { x: (Math.random() - 0.5) * 3, y: -11 - Math.random() * 2 })
+      if (p.freeIdx < 0) {
+        /* release the topmost star — up, out, through nothing at all */
+        let idx = 0
+        for (let i = 1; i < p.bodies.length; i++) {
+          if (p.bodies[i].position.y < p.bodies[idx].position.y) idx = i
+        }
+        const top = p.bodies[idx]
+        const savedFilter = top.collisionFilter
+        p.freeIdx = idx
+        p.freeFaded = false
+        p.visuals[idx].el.classList.add('free')
+        top.collisionFilter = { group: -1, category: 0, mask: 0 }
+        p.M.Body.setVelocity(top, { x: (Math.random() - 0.5) * 2.5, y: -13 })
+        p.M.Body.setAngularVelocity(top, (Math.random() - 0.5) * 0.3)
+        /* the jar never runs dry — home the star while no one is looking */
+        p.freeTimer = window.setTimeout(() => {
+          const q = physics.current
+          if (!q) return
+          q.visuals[idx].el.style.opacity = ''
+          q.visuals[idx].el.classList.remove('free')
+          top.collisionFilter = savedFilter
+          q.M.Body.setPosition(top, { x: 75 + Math.random() * 70, y: 120 })
+          q.M.Body.setVelocity(top, { x: 0, y: 0 })
+          q.M.Body.setAngularVelocity(top, 0)
+          q.freeIdx = -1
+        }, 900)
+      }
     } else if (flyer.current) {
       const f = flyer.current
       f.classList.remove('go'); void f.offsetWidth; f.classList.add('go')
+      const r = stage.current?.getBoundingClientRect()
+      if (r) goldDust(r.left + r.width / 2, r.top + 30, 8, 50)
     }
 
     setShow(false)

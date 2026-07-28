@@ -3,7 +3,7 @@ import { HERO } from '../content'
 import { NAME_W, NAME_H, NAME_SVG_INNER } from '../lib/namePath'
 import { gsap } from '../lib/gsapSetup'
 import { reduced } from '../lib/prefs'
-import { burst } from '../lib/fx'
+import { burst, goldDust } from '../lib/fx'
 import { scrollToEl } from '../lib/scroll'
 
 const Tiara = () => (
@@ -34,7 +34,7 @@ export default function Hero({ opened }: { opened: boolean }) {
       if (name) gsap.set(name.querySelectorAll('path'), { strokeDashoffset: 0, fillOpacity: 1 })
       return
     }
-    const tl = gsap.timeline({ delay: 0.15 })
+    const tl = gsap.timeline({ delay: 0.35 }) /* let the camera push land first */
     tl.fromTo(seq, { autoAlpha: 0, y: 18, filter: 'blur(6px)' },
       { autoAlpha: 1, y: 0, filter: 'blur(0px)', duration: 0.9, stagger: 0.14, ease: 'power3.out' }, 0)
     if (name) {
@@ -43,6 +43,11 @@ export default function Hero({ opened }: { opened: boolean }) {
       tl.to(paths, { strokeDashoffset: 0, duration: 2.1, stagger: 0.28, ease: 'power1.inOut' }, 0.5)
         .to(paths, { fillOpacity: 1, duration: 1.1, ease: 'power2.out' }, '-=0.9')
         .to(paths, { strokeWidth: 0, duration: 0.8 }, '<')
+        /* the signature settles — a breath of gold dust off the ink */
+        .call(() => {
+          const r = name.getBoundingClientRect()
+          goldDust(r.left + r.width / 2, r.top + r.height * 0.55, 14, r.width * 0.7)
+        }, undefined, '-=0.35')
     }
     return () => { tl.kill() }
   }, [opened])

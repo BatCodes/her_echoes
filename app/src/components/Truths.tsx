@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { TRUTHS, HEADS, type IconName } from '../content'
 import SectionHead from './SectionHead'
-import { gsap } from '../lib/gsapSetup'
+import { gsap, ScrollTrigger } from '../lib/gsapSetup'
 import { reduced, vibrate } from '../lib/prefs'
 import { burst } from '../lib/fx'
 import { scrollToEl, startScroll, stopScroll } from '../lib/scroll'
@@ -28,14 +28,42 @@ const STAR_POS: [number, number][] = [
 
 function Constellation({ lit, complete }: { lit: Set<number>; complete: boolean }) {
   const pathRef = useRef<SVGPathElement>(null)
+  const scrub = useRef<ScrollTrigger | null>(null)
+
+  /* faint pre-trace — scroll is the hand that sketches the crown */
+  useEffect(() => {
+    const p = pathRef.current
+    if (!p || reduced) return
+    const len = p.getTotalLength()
+    p.classList.add('trace')
+    const tw = gsap.fromTo(p, { strokeDasharray: len, strokeDashoffset: len }, {
+      strokeDashoffset: 0,
+      ease: 'none',
+      scrollTrigger: { trigger: '#cards', start: 'top 80%', end: 'top 25%', scrub: 0.6 },
+    })
+    scrub.current = tw.scrollTrigger ?? null
+    return () => {
+      tw.scrollTrigger?.kill()
+      tw.kill()
+      scrub.current = null
+      p.classList.remove('trace')
+      gsap.set(p, { clearProps: 'strokeDasharray,strokeDashoffset' })
+    }
+  }, [])
+
   useEffect(() => {
     const p = pathRef.current
     if (!p || !complete) return
+    /* the sketch has served — hand the pen to the bright draw */
+    scrub.current?.kill()
+    scrub.current = null
+    p.classList.remove('trace')
     const len = p.getTotalLength()
     if (reduced) { p.classList.add('done'); return }
     p.classList.add('done')
-    gsap.fromTo(p, { strokeDasharray: len, strokeDashoffset: len },
+    const tw = gsap.fromTo(p, { strokeDasharray: len, strokeDashoffset: len },
       { strokeDashoffset: 0, duration: 2.2, ease: 'power2.inOut' })
+    return () => { tw.kill() }
   }, [complete])
   const d = 'M' + CROWN.map((pt) => pt.join(' ')).join(' L') + ' Z'
   return (
@@ -66,11 +94,22 @@ function Tile({ i, seen, onOpen }: { i: number; seen: boolean; onOpen: (i: numbe
     const el = ref.current
     if (!el || reduced || e.pointerType === 'touch') return
     const r = el.getBoundingClientRect()
-    const px = (e.clientX - r.left) / r.width - 0.5
-    const py = (e.clientY - r.top) / r.height - 0.5
+    const fx = (e.clientX - r.left) / r.width
+    const fy = (e.clientY - r.top) / r.height
+    const px = fx - 0.5
+    const py = fy - 0.5
     el.style.transform = `perspective(600px) rotateY(${px * 9}deg) rotateX(${py * -9}deg)`
+    /* glare rides the same pointer */
+    el.style.setProperty('--gx', fx * 100 + '%')
+    el.style.setProperty('--gy', fy * 100 + '%')
   }
-  const onLeave = () => { if (ref.current) ref.current.style.transform = '' }
+  const onLeave = () => {
+    const el = ref.current
+    if (!el) return
+    el.style.transform = ''
+    el.style.removeProperty('--gx')
+    el.style.removeProperty('--gy')
+  }
 
   return (
     <motion.button
@@ -87,6 +126,7 @@ function Tile({ i, seen, onOpen }: { i: number; seen: boolean; onOpen: (i: numbe
       viewport={{ once: true, margin: '-40px' }}
       transition={{ duration: 0.55, delay: (i % 8) * 0.06, layout: { duration: 0.45, ease: [0.3, 0.8, 0.3, 1] } }}
     >
+      <span className="glare" aria-hidden="true" />
       <span className="em" dangerouslySetInnerHTML={{ __html: ICONS[t.icon] }} />
       <span className="cat">{t.category}</span>
       <span className="ans" dangerouslySetInnerHTML={{ __html: t.answer }} />

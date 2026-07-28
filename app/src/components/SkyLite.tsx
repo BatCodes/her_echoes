@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 
-/* the gentle fallback sky: a handful of CSS-twinkling stars */
+/* the gentle fallback sky: CSS-twinkling stars over two soft
+   nebula washes — no WebGL, no physics, still unmistakably night */
 export default function SkyLite() {
   const stars = useMemo(() =>
     Array.from({ length: 44 }, (_, i) => ({
@@ -13,6 +14,8 @@ export default function SkyLite() {
     })), [])
   return (
     <div className="skylite" aria-hidden="true">
+      <div className="slneb a" />
+      <div className="slneb b" />
       {stars.map((s) => (
         <span key={s.id} style={{
           left: s.left + '%', top: s.top + '%', fontSize: s.size,

@@ -9,9 +9,10 @@ export default function Divider() {
     if (!el || reduced) return
     const paths = el.querySelectorAll('path')
     gsap.set(paths, { strokeDasharray: 130, strokeDashoffset: 130 })
+    /* draws itself as it passes — keyed to her scroll, not a timer */
     const tw = gsap.to(paths, {
-      strokeDashoffset: 0, duration: 1.3, stagger: 0.1, ease: 'power2.out',
-      scrollTrigger: { trigger: el, start: 'top 88%', once: true },
+      strokeDashoffset: 0, stagger: 0.08, ease: 'none',
+      scrollTrigger: { trigger: el, start: 'top 96%', end: 'top 62%', scrub: 0.6 },
     })
     return () => { tw.scrollTrigger?.kill(); tw.kill() }
   }, [])
