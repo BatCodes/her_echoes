@@ -1,4 +1,5 @@
 import { reduced } from './prefs'
+import { quillOn, quillOff } from './audio'
 
 /* ═══════════════════════════════════════════════════════════════
    the enchanted ink — every letter conjured onto the page,
@@ -186,9 +187,10 @@ export function installInk() {
     tx = r.right - 2
     ty = r.top + r.height * 0.62
     if (!on) { x = tx - 18; y = ty - 14; on = true; q.classList.add('on') }
+    quillOn() /* the nib touches the paper — a faint scritch rides the spark */
     if (!raf) raf = requestAnimationFrame(loop)
     if (hide) clearTimeout(hide)
-    hide = setTimeout(() => { on = false; q.classList.remove('on') }, 520)
+    hide = setTimeout(() => { on = false; q.classList.remove('on'); quillOff() }, 520)
   }, true)
 }
 

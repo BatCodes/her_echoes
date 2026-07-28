@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef } from 'react'
-import { COVER } from '../content'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { COVER, GREETINGS } from '../content'
 import { gsap } from '../lib/gsapSetup'
 import { reduced, tier } from '../lib/prefs'
 import { markSkyOpen } from '../lib/skyState'
+import { keepsake, daysAway } from '../lib/keepsake'
 import { EASE, DUR, STAG } from '../lib/motion'
 
 /* ═══════════════════════════════════════════════════════════════
@@ -35,10 +36,30 @@ function Lines({ html, className }: { html: string; className: string }) {
   )
 }
 
+/* the cover greets a returning princess — the kingdom kept everything */
+function greeting(): string {
+  const k = keepsake()
+  if (k.visits < 1) return ''
+  if (k.visits === 1) return GREETINGS.kept
+  const d = daysAway()
+  if (d <= 1) return GREETINGS.soon
+  if (d <= 6) return GREETINGS.aFew(d)
+  return GREETINGS.long(d)
+}
+
 export default function Cover({ onOpen }: { onOpen: () => void }) {
   const root = useRef<HTMLButtonElement>(null)
   const opening = useRef(false)
   const intro = useRef<gsap.core.Timeline | null>(null)
+  const [lit, setLit] = useState(false)
+  const greet = useMemo(greeting, [])
+
+  /* the summoning comet has landed on the clasp — let it catch fire */
+  useEffect(() => {
+    const onSummon = () => setLit(true)
+    addEventListener('echoes:summoned', onSummon)
+    return () => removeEventListener('echoes:summoned', onSummon)
+  }, [])
 
   /* lite tier gets its own gentle CSS stars behind the veil */
   const stars = useMemo(() =>
@@ -103,7 +124,8 @@ export default function Cover({ onOpen }: { onOpen: () => void }) {
           <circle cx="65" cy="8" r="2" fill="#F2A9B4" />
         </svg>
         <Lines html={COVER.sub} className="ftsub" />
-        <span className="ftcta" data-cs style={{ display: 'block' }}>{COVER.cta}</span>
+        {greet && <span className="ftgreet" data-cs style={{ display: 'block' }}>{greet}</span>}
+        <span className={'ftcta' + (lit ? ' lit' : '')} data-cs style={{ display: 'block' }}>{COVER.cta}</span>
       </span>
     </button>
   )
