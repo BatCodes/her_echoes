@@ -20,11 +20,3 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
-
-/* the kingdom in her pocket — registered after load so it never
-   competes with the first visit's critical path */
-if ('serviceWorker' in navigator) {
-  addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(() => { /* fine */ })
-  })
-}

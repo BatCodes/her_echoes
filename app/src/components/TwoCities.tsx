@@ -1,10 +1,9 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { DELIVERIES, HEADS } from '../content'
 import SectionHead from './SectionHead'
 import { gsap, MotionPathPlugin } from '../lib/gsapSetup'
 import { reduced } from '../lib/prefs'
 import { sparkleAt } from '../lib/fx'
-import { twoClocks } from '../lib/almanac'
 
 /* keep TS aware the plugin import is intentional (registered in gsapSetup) */
 void MotionPathPlugin
@@ -16,12 +15,6 @@ export default function TwoCities() {
   const [di, setDi] = useState(-1)
   const [shown, setShown] = useState(false)
   const flying = useRef(false)
-  /* both kingdoms' clocks, live — 6,000 km made visible */
-  const [clocks, setClocks] = useState(twoClocks)
-  useEffect(() => {
-    const t = setInterval(() => setClocks(twoClocks()), 30000)
-    return () => clearInterval(t)
-  }, [])
 
   const send = () => {
     if (flying.current) return
@@ -70,11 +63,6 @@ export default function TwoCities() {
           <text className="citylbl" x="376" y="185" textAnchor="middle">me · pallaresos park</text>
           <text ref={heart} fontSize="15" fill="#E77E93" opacity="0">♥</text>
         </svg>
-      </div>
-      <div className="clockrow" aria-hidden="true">
-        <span>you · <b>{clocks.hers}</b></span>
-        <span className="csep">✦</span>
-        <span>me · <b>{clocks.his}</b></span>
       </div>
       <div className={'delivered' + (shown ? ' show' : '')} aria-live="polite" dangerouslySetInnerHTML={{ __html: text }} />
       <button className="goldbtn" onClick={send}>send ♥ home</button>

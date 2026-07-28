@@ -1,21 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import { OUR_SONGS, PLAYER_VOLUME } from '../content'
-import { keepsake, patch } from '../lib/keepsake'
-import { unlock, musicNode, musicLevel, sfxOn, setSfx, chime } from '../lib/audio'
-import { soft } from '../lib/haptics'
 
 const ROMAN = ['i', 'ii', 'iii', 'iv', 'v', 'vi', 'vii', 'viii']
-const LEVEL = PLAYER_VOLUME / 100
 
 /* ─────────────────────────────────────────────────────────────
-   our songs · a glass vinyl in the corner — no video, no ads,
-   no strangers' servers. The files live in the kingdom itself.
+   our songs · a glass vinyl in the corner
    · starts on her first touch anywhere (pointer, Enter or Space)
-   · WebAudio gain does every fade (iOS ignores element.volume)
-   · lock screen shows the song via Media Session
-   · reopening the site resumes the exact second she left
-   · the little gold bell above the disc silences the small
-     sounds — never her music
+   · visible mini-player inside the panel (audio keeps playing
+     when the panel is tucked away — close it, keep the song)
+   · gold progress ring around the spinning disc
    ───────────────────────────────────────────────────────────── */
 
 const Vinyl = () => (
@@ -39,152 +32,137 @@ const IPlay = () => <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
 const IPause = () => <svg viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z" /></svg>
 const IPrev = () => <svg viewBox="0 0 24 24"><path d="M6 6h2v12H6zM20 6l-10 6 10 6z" /></svg>
 const INext = () => <svg viewBox="0 0 24 24"><path d="M16 6h2v12h-2zM4 6l10 6-10 6z" /></svg>
-const IBell = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M6 9.5 C6 6 8.6 3.8 12 3.8 C15.4 3.8 18 6 18 9.5 C18 14 19.6 15.4 20.2 16 H3.8 C4.4 15.4 6 14 6 9.5 Z" />
-    <path d="M10.2 19 a2 2 0 0 0 3.6 0" />
-  </svg>
-)
 
 export default function SongsPlayer() {
   const [open, setOpen] = useState(false)
   const [started, setStarted] = useState(false)
   const [playing, setPlaying] = useState(false)
-  const [idx, setIdx] = useState(() => {
-    const k = keepsake().player.idx
-    return k >= 0 && k < OUR_SONGS.length ? k : 0
-  })
+  const [idx, setIdx] = useState(0)
+  const [ready, setReady] = useState(false)
   const [note, setNote] = useState('')
   const [progress, setProgress] = useState(0)
   const [hint, setHint] = useState(false)
-  const [bell, setBell] = useState(sfxOn)
 
-  const el = useRef<HTMLAudioElement | null>(null)
-  const idxRef = useRef(idx)
+  const player = useRef<YTPlayer | null>(null)
+  const mount = useRef<HTMLDivElement>(null)
+  const idxRef = useRef(0)
+  const triedAlt = useRef(false)
+  const fadeTimer = useRef<ReturnType<typeof setInterval> | null>(null)
   const started_ = useRef(false)
-  const wired = useRef(false)
 
-  const persist = () => {
-    const a = el.current
-    if (a) patch({ player: { idx: idxRef.current, pos: a.currentTime || 0 } })
+  const fadeIn = () => {
+    const p = player.current
+    if (!p) return
+    if (fadeTimer.current) clearInterval(fadeTimer.current)
+    try { p.setVolume(0) } catch { /* ignore */ }
+    let v = 0
+    fadeTimer.current = setInterval(() => {
+      v = Math.min(PLAYER_VOLUME, v + 3)
+      try { player.current?.setVolume(v) } catch { /* ignore */ }
+      if (v >= PLAYER_VOLUME && fadeTimer.current) clearInterval(fadeTimer.current)
+    }, 130)
   }
 
-  const setSession = (i: number) => {
-    try {
-      if (!('mediaSession' in navigator)) return
-      const s = OUR_SONGS[i]
-      navigator.mediaSession.metadata = new MediaMetadata({
-        title: s.title, artist: s.artist, album: 'her echoes ♥',
-        artwork: [{ src: './apple-touch-icon.png', sizes: '180x180', type: 'image/png' }],
-      })
-    } catch { /* fine */ }
-  }
-
-  const ensureEl = (): HTMLAudioElement => {
-    if (el.current) return el.current
-    const a = new Audio()
-    a.preload = 'none'
-    a.addEventListener('playing', () => { setPlaying(true); setNote('') })
-    a.addEventListener('pause', () => { setPlaying(false); persist() })
-    a.addEventListener('ended', () => next())
-    a.addEventListener('timeupdate', () => {
-      if (a.duration > 0) setProgress(Math.min(100, (a.currentTime / a.duration) * 100))
-    })
-    a.addEventListener('error', () => {
-      setPlaying(false)
-      setNote('this song’s file isn’t in the vault yet ✦')
-    })
-    el.current = a
-    return a
-  }
-
-  const load = (i: number, pos = 0, play = true) => {
+  const loadIndex = (i: number, viaError = false) => {
     idxRef.current = i
     setIdx(i)
-    setProgress(0)
     setNote('')
-    const a = ensureEl()
-    /* the fade lives on the WebAudio bus — dip, swap, swell */
-    musicLevel(0, 0.25)
-    /* base is './' — a relative src resolves against the page itself */
-    a.src = OUR_SONGS[i].src
-    if (pos > 0) a.currentTime = pos
-    setSession(i)
-    persist()
-    if (play) {
-      const p = a.play()
-      if (p) p.then(() => {
-        if (!wired.current) wired.current = musicNode(a)
-        musicLevel(LEVEL, pos > 0 ? 2.2 : 1.2)
-      }).catch(() => { /* not allowed yet — she'll touch again */ })
+    setProgress(0)
+    if (!viaError) triedAlt.current = false
+    const p = player.current
+    if (p) {
+      try { p.loadVideoById(OUR_SONGS[i].yt); fadeIn() } catch { /* ignore */ }
     }
   }
 
-  const next = () => load((idxRef.current + 1) % OUR_SONGS.length)
-  const prev = () => load((idxRef.current - 1 + OUR_SONGS.length) % OUR_SONGS.length)
+  const next = () => loadIndex((idxRef.current + 1) % OUR_SONGS.length)
+  const prev = () => loadIndex((idxRef.current - 1 + OUR_SONGS.length) % OUR_SONGS.length)
+
+  const createPlayer = () => {
+    const YT = window.YT
+    if (!YT || !mount.current || player.current) return
+    player.current = new YT.Player(mount.current, {
+      videoId: OUR_SONGS[idxRef.current].yt,
+      playerVars: {
+        autoplay: 1, playsinline: 1, controls: 0, rel: 0,
+        modestbranding: 1, iv_load_policy: 3, disablekb: 1,
+      },
+      events: {
+        onReady: () => { setReady(true); fadeIn() },
+        onStateChange: (e) => {
+          const S = window.YT?.PlayerState
+          if (!S) return
+          if (e.data === S.PLAYING) setPlaying(true)
+          else if (e.data === S.PAUSED) setPlaying(false)
+          else if (e.data === S.ENDED) next()
+        },
+        onError: () => {
+          const song = OUR_SONGS[idxRef.current]
+          if (song.alt && !triedAlt.current) {
+            triedAlt.current = true
+            try { player.current?.loadVideoById(song.alt) } catch { /* ignore */ }
+          } else {
+            setNote('this one would not load — try the next ✦')
+            setPlaying(false)
+          }
+        },
+      },
+    })
+  }
 
   const start = () => {
     if (started_.current) return
     started_.current = true
     setStarted(true)
     setHint(false)
-    unlock()
-    /* the record never stopped spinning — resume her exact second */
-    load(idxRef.current, keepsake().player.pos || 0)
-    try {
-      const ms = navigator.mediaSession
-      if (ms) {
-        ms.setActionHandler('play', () => { el.current?.play().catch(() => {}) })
-        ms.setActionHandler('pause', () => { el.current?.pause() })
-        ms.setActionHandler('previoustrack', prev)
-        ms.setActionHandler('nexttrack', next)
-      }
-    } catch { /* fine */ }
+    if (window.YT?.Player) { createPlayer(); return }
+    window.onYouTubeIframeAPIReady = createPlayer
+    const s = document.createElement('script')
+    s.src = 'https://www.youtube.com/iframe_api'
+    document.head.appendChild(s)
   }
 
   /* her first touch anywhere wakes the music */
   useEffect(() => {
     const onPointer = () => start()
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') start() }
-    addEventListener('pointerdown', onPointer)
+    addEventListener('pointerdown', onPointer, { once: false })
     addEventListener('keydown', onKey)
     const t1 = setTimeout(() => { if (!started_.current) setHint(true) }, 1400)
     const t2 = setTimeout(() => setHint(false), 16000)
-    const onHide = () => { if (document.hidden) persist() }
-    document.addEventListener('visibilitychange', onHide)
-    const saver = setInterval(() => { if (el.current && !el.current.paused) persist() }, 5000)
     return () => {
       removeEventListener('pointerdown', onPointer)
       removeEventListener('keydown', onKey)
-      document.removeEventListener('visibilitychange', onHide)
-      clearTimeout(t1); clearTimeout(t2); clearInterval(saver)
+      clearTimeout(t1); clearTimeout(t2)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  /* remove start listeners' work once started; keep escape-to-close */
   useEffect(() => {
     const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false) }
     if (open) addEventListener('keydown', onEsc)
     return () => removeEventListener('keydown', onEsc)
   }, [open])
 
-  const toggle = () => {
-    const a = el.current
-    if (!a) { start(); return }
-    if (a.paused) {
-      a.play().then(() => musicLevel(LEVEL, 1)).catch(() => {})
-    } else {
-      musicLevel(0, 0.35)
-      setTimeout(() => a.pause(), 380)
-    }
-  }
+  /* gold ring: poll the player gently while it plays */
+  useEffect(() => {
+    if (!playing) return
+    const t = setInterval(() => {
+      const p = player.current
+      if (!p) return
+      try {
+        const d = p.getDuration()
+        if (d > 0) setProgress(Math.min(100, (p.getCurrentTime() / d) * 100))
+      } catch { /* ignore */ }
+    }, 500)
+    return () => clearInterval(t)
+  }, [playing])
 
-  const toggleBell = () => {
-    const on = !bell
-    setBell(on)
-    setSfx(on)
-    if (on) chime(12, 0.08)
-    soft()
+  const toggle = () => {
+    const p = player.current
+    if (!p) { start(); return }
+    try { if (playing) p.pauseVideo(); else p.playVideo() } catch { /* ignore */ }
   }
 
   const song = OUR_SONGS[idx]
@@ -203,10 +181,13 @@ export default function SongsPlayer() {
           <path d="M4 8 C 30 12, 46 4, 65 8 C 84 12, 100 4, 126 8" fill="none" stroke="#EEC07A" strokeWidth="1.2" opacity=".7" />
           <circle cx="65" cy="8" r="1.8" fill="#F2A9B4" />
         </svg>
+        <div className="os-video">
+          <div ref={mount} />
+          {!ready && <div className="os-veil">{started ? 'tuning the strings…' : 'tap play to begin ♪'}</div>}
+        </div>
         <div className="os-now">
           <div className="os-nowtitle">{song.title}</div>
           <div className="os-nowartist">{song.artist}{note && <> · <i>{note}</i></>}</div>
-          {!started && <div className="os-waiting">{'touch anywhere and it begins ♪'}</div>}
         </div>
         <div className="os-ctrls">
           <button className="os-skip" aria-label="Previous song" onClick={prev}><IPrev /></button>
@@ -217,10 +198,10 @@ export default function SongsPlayer() {
         </div>
         <ul className="os-list">
           {OUR_SONGS.map((s, i) => (
-            <li key={s.src}>
+            <li key={s.yt}>
               <button
                 className={'os-song' + (i === idx ? ' current' : '')}
-                onClick={() => load(i)}
+                onClick={() => loadIndex(i)}
               >
                 <span className="os-num">{ROMAN[i]}</span>
                 <span className="os-meta">
@@ -238,15 +219,6 @@ export default function SongsPlayer() {
       <div className={'os-hint' + (hint ? ' show' : '')} aria-hidden="true">
         tap anywhere — our song will play ♪
       </div>
-
-      <button
-        className={'os-bell' + (bell ? ' on' : '')}
-        aria-label={bell ? 'Silence the small sounds' : 'Let the small sounds ring'}
-        aria-pressed={bell}
-        onClick={toggleBell}
-      >
-        <IBell />
-      </button>
 
       <button
         className="os-disc"

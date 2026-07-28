@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { HERO } from '../content'
-import { dayOfForever } from '../lib/almanac'
 import { NAME_W, NAME_H, NAME_SVG_INNER } from '../lib/namePath'
 import { gsap } from '../lib/gsapSetup'
 import { reduced } from '../lib/prefs'
@@ -78,8 +77,6 @@ export default function Hero({ opened }: { opened: boolean }) {
       />
       <div className={'namewhisper' + (whisper ? ' on' : '')} aria-live="polite" data-hs>{whisper || '\u00a0'}</div>
       <div className="nast" lang="ur" dir="rtl" data-hs>{HERO.nastaliq}</div>
-      {/* always right, grows every day, flips at HER midnight */}
-      <div className="dayn" data-hs>day {dayOfForever()} of forever</div>
       <svg className="heroswash" data-hs viewBox="0 0 160 16" aria-hidden="true">
         <path d="M4 8 C 40 15, 62 2, 80 8 C 98 14, 120 1, 156 8" fill="none" stroke="#EEC07A" strokeWidth="1.1" opacity=".7" />
         <circle cx="80" cy="8" r="1.8" fill="#F2A9B4" />
