@@ -449,27 +449,34 @@ html{scroll-behavior:smooth}
   html.ft .shead.vis p:not(.ftlz){opacity:1;transform:none;filter:none;transition-delay:.46s}
 
   /* — enchanted ink: every letter is conjured onto the page — */
-  html.ft .ftl{--gc:238,192,122;opacity:0;display:inline-block;transform:translateY(.45em) rotate(var(--r,4deg)) scale(.55)}
+  html.ft .ftl{--gc:238,192,122;position:relative;opacity:0;display:inline-block;transform:translateY(.45em) rotate(var(--r,4deg)) scale(.55)}
   html.ft .ftl.ftg{--gc:242,169,180}
   html.ft :is(.vis,.ftv,.in,.on,.open,.show) .ftl,
   html.tale .hero .ftl{animation:ftInk .7s cubic-bezier(.2,.7,.25,1.15) forwards;animation-delay:var(--d,0ms)}
-  /* body text: transform+opacity only — the GPU composites hundreds of letters for free */
+  /* the letter itself pops on the GPU… */
   @keyframes ftInk{
     0%{opacity:0;transform:translateY(.45em) rotate(var(--r,4deg)) scale(.55)}
     55%{opacity:1;transform:translateY(-.08em) rotate(calc(var(--r,4deg)*-.4)) scale(1.12)}
     100%{opacity:1;transform:translateY(0) rotate(0deg) scale(1)}
   }
-  /* the white-hot golden flash is reserved for headings and her name — few letters, full glamour */
-  html.ft .ftl.rich{filter:blur(6px)}
-  html.ft :is(.vis,.ftv,.in,.on,.open,.show) .ftl.rich,
-  html.tale .hero .ftl.rich{animation-name:ftInkRich}
-  @keyframes ftInkRich{
-    0%{opacity:0;transform:translateY(.45em) rotate(var(--r,4deg)) scale(.55);filter:blur(6px);
-       text-shadow:0 0 4px rgba(255,255,255,.95),0 0 20px rgba(var(--gc),1)}
-    45%{opacity:1;transform:translateY(-.09em) rotate(calc(var(--r,4deg)*-.4)) scale(1.16);filter:blur(0);
-       text-shadow:0 0 7px rgba(255,246,220,.9),0 0 24px rgba(var(--gc),.8)}
-    100%{opacity:1;transform:translateY(0) rotate(0deg) scale(1);filter:none;text-shadow:0 0 9px rgba(var(--gc),.16)}
+  /* …and the Cinderella glow is a painted-once ghost of each letter that fades on the
+     compositor — the full white-hot golden flash, with zero per-frame repaints */
+  html.ft .ftl::after{content:attr(data-c);position:absolute;left:0;top:0;opacity:0;pointer-events:none;color:#FFF6DC;
+    text-shadow:0 0 5px rgba(255,255,255,.95),0 0 16px rgba(var(--gc),1),0 0 28px rgba(var(--gc),.55)}
+  html.ft :is(.vis,.ftv,.in,.on,.open,.show) .ftl::after,
+  html.tale .hero .ftl::after{animation:ftFlash .65s cubic-bezier(.3,.6,.3,1) var(--d,0ms) both}
+  html.ft .ftl.rich::after{text-shadow:0 0 6px rgba(255,255,255,.98),0 0 22px rgba(var(--gc),1),0 0 42px rgba(var(--gc),.6)}
+  html.ft :is(.vis,.ftv,.in,.on,.open,.show) .ftl.rich::after,
+  html.tale .hero .ftl.rich::after{animation-duration:.85s}
+  @keyframes ftFlash{
+    0%{opacity:0;transform:translateY(.3em) scale(.7)}
+    14%{opacity:1;transform:translateY(-.04em) scale(1.12)}
+    100%{opacity:0;transform:translateY(-.12em) scale(1.05)}
   }
+  /* the quill — a spark that travels the line while the words write themselves */
+  #quill{position:fixed;left:0;top:0;z-index:65;pointer-events:none;font-size:13px;color:var(--pearl);opacity:0;transition:opacity .35s;will-change:transform;
+    text-shadow:0 0 6px rgba(255,246,220,.95),0 0 16px rgba(238,192,122,.9),0 0 30px rgba(238,192,122,.5)}
+  #quill.on{opacity:1}
 
   /* — golden stardust drifting up through the whole tale — */
   .ftdust{position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden}
@@ -2093,6 +2100,7 @@ function burst(n){
             var s = d.createElement('span');
             s.className = (Math.random() < .15 ? 'ftl ftg' : 'ftl') + (rich ? ' rich' : '');
             s.textContent = ch;
+            s.dataset.c = ch;
             s.style.setProperty('--d', t + 'ms');
             s.style.setProperty('--r', (Math.random() * 12 - 6).toFixed(1) + 'deg');
             t += step;
@@ -2148,7 +2156,7 @@ function burst(n){
       tt = ftLetterize(hd.querySelector('h2'), 'char', 52, tt, true);
       hd.dataset.ftH2End = tt;
       tt += 230;
-      ftLetterize(hd.querySelector('p'), 'word', 60, tt);
+      ftLetterize(hd.querySelector('p'), 'char', 13, tt);
     }
 
     /* — the hero writes itself as the tale opens (nastaliq stays whole, on purpose) — */
@@ -2158,17 +2166,17 @@ function burst(n){
       ht = ftLetterize(hero.querySelector('.mooncorner .lbl'), 'char', 28, ht) + 120;
       ht = ftLetterize(hero.querySelector('.for'), 'word', 150, Math.max(ht, 600), true) + 150;
       if (big){ ht = ftLetterize(big, 'char', 170, Math.max(ht, 900), true); big.dataset.ftEnd = ht; ht += 260; }
-      ht = ftLetterize(hero.querySelector('.crest'), 'word', 90, ht) + 160;
-      ht = ftLetterize(hero.querySelector('.sub'), 'word', 80, ht) + 160;
+      ht = ftLetterize(hero.querySelector('.crest'), 'char', 22, ht) + 160;
+      ht = ftLetterize(hero.querySelector('.sub'), 'char', 20, ht) + 160;
       ftLetterize(hero.querySelector('.begin'), 'word', 130, ht);
     }
 
     /* — scroll-revealed blocks (viewport-triggered) — */
     eachSeq('.tile', [['.cat','char',34,120],['.ans','char',34,0]], 150, true);
     eachSeq('.fitem', [['.fdate','char',22,110],['.ftitle','char',22,0]], 130, true);
-    eachSeq('.steps li', [['.','word',70,0]], 260, true);
+    eachSeq('.steps li', [['.','char',13,0]], 260, true);
     seq(d.querySelector('.decree'), [['.dk','char',26,150],['h3','char',46,200,true],
-      ['p:nth-of-type(1)','word',60,180],['p:nth-of-type(2)','word',60,180],
+      ['p:nth-of-type(1)','char',12,180],['p:nth-of-type(2)','char',12,180],
       ['.dsign','word',170,120,true],['.dwit','char',18,0]], 90, true);
     ['.counter','.counterhint','.hintl','.skycap','.gcount','.ptitle','.pcount','.footnote',
      '.holdhint','.finale .k','.finale .inf','#mirrorText','#grantLine','#sealHint','.jarbtn',
@@ -2181,19 +2189,19 @@ function burst(n){
     ftLetterize(d.querySelector('.nextb'), 'char', 17, 260);
 
     /* — photo captions ride the existing .vis reveal — */
-    eachSeq('.photo .cap', [['.q','char',40,170,true],['.who','char',22,210],['.aside','word',60,0]], 0, false);
+    eachSeq('.photo .cap', [['.q','char',40,170,true],['.who','char',22,210],['.aside','char',12,0]], 0, false);
 
     /* — interaction-revealed text: writes at the moment it is uncovered — */
-    eachSeq('.env .note', [['.','word',60,0]], 0, false);          /* envelope opens */
-    eachSeq('.fitem .fbody', [['.','word',55,0]], 0, false);        /* first unfolds */
-    eachSeq('.promise', [['.','word',60,0]], 0, false);             /* promise sworn */
+    eachSeq('.env .note', [['.','char',13,0]], 0, false);          /* envelope opens */
+    eachSeq('.fitem .fbody', [['.','char',12,0]], 0, false);        /* first unfolds */
+    eachSeq('.promise', [['.','char',13,0]], 0, false);             /* promise sworn */
     ftLetterize(d.querySelector('.psworn'), 'word', 150, 90, true);
     ftLetterize(d.querySelector('#meterErr'), 'char', 20, 90);
-    ftLetterize(d.querySelector('#meterSub'), 'word', 55, 420);
-    ftLetterize(d.querySelector('.delivcard'), 'word', 60, 90);
+    ftLetterize(d.querySelector('#meterSub'), 'char', 12, 420);
+    ftLetterize(d.querySelector('.delivcard'), 'char', 13, 90);
     seq(d.getElementById('letter'), [['.to','word',160,180,true],
-      ['p:nth-of-type(1)','word',60,220],['p:nth-of-type(2)','word',60,220],
-      ['p:nth-of-type(3)','word',60,220],['.sig','word',170,140,true],['.ps','char',22,0]], 450, false);
+      ['p:nth-of-type(1)','char',13,220],['p:nth-of-type(2)','char',13,220],
+      ['p:nth-of-type(3)','char',13,220],['.sig','word',170,140,true],['.ps','char',22,0]], 450, false);
 
     /* — ambient stardust drifting up through the whole tale — */
     if (!reduced){
@@ -2275,6 +2283,33 @@ function burst(n){
     var dv = d.querySelectorAll('.divider');
     for (var k = 0; k < dv.length; k++) dv[k].classList.add('vis');
   }
+})();
+</script>
+<script>
+(function(){
+  /* ═══ the quill · a spark writes the marquee lines, like the storybooks do ═══ */
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var MARQ = '.shead h2, #bigname, #letter, .dsign, .psworn, .photo .q';
+  var q = document.createElement('span');
+  q.id = 'quill'; q.textContent = '✦'; q.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(q);
+  var tx = -60, ty = -60, x = -60, y = -60, on = false, hide = null, raf = 0;
+  function loop(){
+    x += (tx - x) * .32; y += (ty - y) * .32;
+    q.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0)';
+    if (on || Math.abs(tx - x) > .5) raf = requestAnimationFrame(loop); else raf = 0;
+  }
+  document.addEventListener('animationstart', function(e){
+    if (e.animationName !== 'ftInk') return;
+    var t = e.target;
+    if (!t.closest || !t.closest(MARQ)) return;
+    var r = t.getBoundingClientRect();
+    tx = r.right - 2; ty = r.top + r.height * .62;
+    if (!on){ x = tx - 18; y = ty - 14; on = true; q.classList.add('on'); }
+    if (!raf) raf = requestAnimationFrame(loop);
+    clearTimeout(hide);
+    hide = setTimeout(function(){ on = false; q.classList.remove('on'); }, 520);
+  }, true);
 })();
 </script>
 <script>

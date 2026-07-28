@@ -1,4 +1,4 @@
-# her echoes ✦ v1.7
+# her echoes ✦ v1.8
 
 A little kingdom in **one file**. `index.html` is the whole site — no build,
 no framework, nothing to install. Open it anywhere and the tale plays.
