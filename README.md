@@ -1,9 +1,24 @@
-# her echoes ✦ v1.6
+# her echoes ✦ v1.7
 
 A little kingdom in **one file**. `index.html` is the whole site — no build,
 no framework, nothing to install. Open it anywhere and the tale plays.
 
-## What v1.6 adds (pure addition — nothing removed)
+## What v1.7 adds — the toys grow up (pure addition — nothing removed)
+
+- **The star jar is real** — thirteen stars tumble and settle under real physics;
+  tap and one escapes through the mouth and dissolves before the memory unfolds;
+  shake the phone and they scatter.
+- **The meter performs** — a breath back, the hard sweep, overshoot, a tremble
+  against the stop, then it slams straight through 100% with a gold flash at the
+  edges of the screen.
+- **The letter unfolds in 3D** before the ink writes it.
+- **Truth cards grow out of the tile she touched** (shared-element morph), and
+  tiles tilt with a moving glare under a desktop pointer.
+- **Photographs ride her scroll** — parallax she causes, replacing the looping zoom.
+- **The vinyl wears a gold progress ring** that fills as the song plays.
+- **Desktop polish** — magnetic gold buttons, a faint star trailing the cursor.
+
+## And from v1.6
 
 - **Butter** — the enchanted ink is now GPU-composited for body text (the golden
   flash stays on headings and her name, where it reads); long passages write in
