@@ -1,72 +1,51 @@
-# her echoes ✦ v2.1
+# her echoes ✦ v1.5.1
 
-A little kingdom, cinematized — same words, a sky that finally glows.
-Vite + React + TypeScript · WebGL sky with real bloom & nebula (R3F + postprocessing) · Lenis · GSAP ScrollTrigger · Motion · matter-js physics.
+A little kingdom in **one file**. `index.html` is the whole site — no build,
+no framework, nothing to install. Open it anywhere and the tale plays.
 
-## What v2.1 adds over v2
+## What v1.5.1 adds over the night's v1.5 (pure addition — nothing removed)
 
-- **The sky became real** — shader nebula that deepens from dusk to true night as she scrolls, HDR gold stars that *bloom*, comet trails, star condensation on load, camera push-through when the cover opens, gyro + pointer parallax.
-- **v1's warmth restored** — cream storybook paper (confessions, promise scroll, decree, letter), the arched gold mirror, button sheen sweeps, section colour auras, title flourishes, the name at full v1 scale.
-- **Every toy upgraded** — spring-physics love-meter that slams past 100% with a screen-edge glow; a star that escapes the jar before each memory; wax that crumbles into gold debris; the letter unfolds in 3D and its words arrive as ink; three-speed photo parallax with per-scene colour grades.
-- **The polish layer** — trailing cursor star (desktop), magnetic gold buttons, foreground dust motes, film grain that breathes.
-- **Smoothness engineering** — three device tiers (full = WebGL + bloom + physics · mid = WebGL, no post · lite = CSS sky), DPR capped at 2, Three.js chunk lazy-loaded after first paint, scene pauses off-tab, meaningful pre-hydration skeleton, `prefers-reduced-motion` honored everywhere.
-- **OG image** rendered from the hero's own vectors (`npm run og`) — the WhatsApp unfurl matches the site.
+- **Crisp stars** — the sky canvas now renders at the phone's real pixel density
+  (it was blurry on every phone before; this was the one true defect).
+- **A living sky** — stars drift with her scroll, lean toward her hand on desktop
+  and with the phone's tilt on mobile (after her first touch); comets grew real
+  glowing tails; the night deepens the further she reads.
+- **The unfurl works** — proper OG tags + icons, so sharing the link on WhatsApp
+  shows her name under the stars (`og.png`) instead of nothing.
+- **The song on a little screen** — the music player now shows the video inside
+  the panel (display-only) instead of hiding it.
+- **A hum under her thumb** — gentle haptics on the moments that land: evidence
+  found, seal broken, meter blown, envelope opened, the letter revealed.
+
+Everything from v1.5 is untouched: the storybook cover, the enchanted ink that
+writes every letter onto the page, the stardust, the cream papers, all of it.
+
+## Editing
+
+Open `index.html`. Everything she reads lives in plain arrays near the top of
+the main `<script>` — `ITEMS` (eight truths), `MEMS` (star jar), `FIRSTS`,
+`CONF`, `PROMISES`, `LINES` (mirror), `DELIV`, `SCENES` (replays), `GRANTS` —
+and the songs in `OUR_SONGS` inside the music widget (one line per song:
+title, artist, YouTube id, optional backup id).
+
+Change the words → save → upload `index.html` → done. That's the whole pipeline.
 
 ## Repo layout
 
 ```
-/                    ← the BUILT site (what GitHub Pages serves)
-/assets              ← ⚠ the site's JS, CSS and fonts — the page is blank without it
-/app                 ← the source code (edit here)
-/app/src/content.ts  ← every word on the site lives in this one file
-/app/src/lib/motion.ts ← the motion language (eases, durations) — one hand animates everything
-/.github/workflows   ← optional CI deploy (manual trigger)
+index.html           ← the site. the whole site.
+og.png               ← the WhatsApp/link preview image
+favicon.svg, apple-touch-icon.png, 404.html, robots.txt, .nojekyll
 ```
 
-## Deploying — the folder matters
+GitHub Pages serves the repo root from `main` — upload/commit `index.html`
+and it's live in a minute.
 
-The site is not just `index.html`: **the `assets/` folder must be in the repo**,
-or the page loads empty.
+## The React experiment
 
-**Route A · git (recommended, always complete):**
-
-```bash
-git clone https://github.com/BatCodes/her_echoes && cd her_echoes
-git rm -r -q .                       # clear the old contents
-cp -r /path/to/her_echoes_upload/. . # copy EVERYTHING from this folder (incl. dotfiles)
-git add -A && git commit -m "v2.1 ✦ the sky glows" && git push
-```
-
-**Route B · web UI:** repo → *Add file → Upload files* → drag the **entire
-contents** of this folder into the drop zone — *including dragging the `assets`
-and `app` folders themselves*. Commit.
-
-Pages stays on *Deploy from branch → main → /(root)* — no settings change.
-
-## Editing the words
-
-Everything she reads is in **`app/src/content.ts`**. Then:
-
-```bash
-cd app
-npm install        # first time only
-npm run dev        # live preview
-npm run release    # og + build + sync into the repo root → commit & push
-```
-
-Adding a song = one entry in `OUR_SONGS` (YouTube id + optional backup id).
-
-## Notes
-
-- **Privacy** — `noindex` meta + `robots.txt`.
-- **Tiers** — full WebGL sky + bloom + physics on capable devices; WebGL without
-  post-processing on most phones; calm CSS sky elsewhere; `prefers-reduced-motion`
-  honored throughout.
-- **Music** — YouTube requires one tap before sound; the vinyl hint covers it.
-  The visible mini-player sits in the glass panel; audio keeps playing when closed.
-- **Images** — moon/sunset stream from Wikimedia/Unsplash with painted fallbacks.
-  Moon photo credit (CC BY-SA 3.0, Gregory H. Revera) sits in the site footer.
-- If the page ever shows *"a piece of the sky is missing"*, the `assets/` folder
-  didn't make it up — re-upload it.
+A full Vite/React/WebGL rebuild (v2.1, "the sky finally glows") lives on the
+[`v2-react`](../../tree/v2-react) branch — bloom, shader nebula, physics and
+all. It taught us the real lesson: this page's magic is the enchanted ink and
+the warmth, and one honest file carries them better than a framework.
 
 made under one sky ✦
